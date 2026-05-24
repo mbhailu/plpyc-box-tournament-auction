@@ -18,26 +18,43 @@
   body { background:var(--dark); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; }
   h1,h2,h3 { font-family:'Bebas Neue',sans-serif; letter-spacing:2px; }
 
+  /* ── GLOBAL: Remove number input spinners ── */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+  input[type=number] { -moz-appearance:textfield; appearance:textfield; }
+
+  /* ── GLOBAL: Golden scrollbars everywhere ── */
+  * { scrollbar-width:thin; scrollbar-color:var(--gold-dark) var(--dark); }
+  *::-webkit-scrollbar { width:7px; height:7px; }
+  *::-webkit-scrollbar-track { background:var(--dark); border-radius:4px; }
+  *::-webkit-scrollbar-thumb { background:var(--gold-dark); border-radius:4px; border:1px solid var(--dark); }
+  *::-webkit-scrollbar-thumb:hover { background:var(--gold); }
+  *::-webkit-scrollbar-corner { background:var(--dark); }
+
   /* ── DB STATUS BAR ── */
   #db-status-bar {
     position:fixed; bottom:0; left:0; right:0; z-index:9999;
     background:var(--dark2); border-top:1px solid var(--border);
-    padding:6px 16px; display:flex; align-items:center; gap:10px;
-    font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);
+    padding:5px 12px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    font-family:'Space Mono',monospace; font-size:10px; color:var(--muted);
   }
-  .db-dot { width:8px; height:8px; border-radius:50%; background:#888; flex-shrink:0; transition:background 0.3s; }
+  .db-dot { width:7px; height:7px; border-radius:50%; background:#888; flex-shrink:0; transition:background 0.3s; }
   .db-dot.ok { background:var(--green-light); box-shadow:0 0 6px var(--green-light); }
   .db-dot.err { background:var(--red); }
-  #db-status-msg { flex:1; }
-  #db-save-btn { background:rgba(212,160,23,0.15); border:1px solid var(--border); color:var(--gold); padding:4px 14px; border-radius:6px; font-family:'Space Mono',monospace; font-size:11px; cursor:pointer; transition:all 0.2s; letter-spacing:1px; }
+  #db-status-msg { flex:1; min-width:80px; font-size:10px; }
+  #db-save-btn, #db-load-btn, #db-clear-btn, #db-export-btn, #db-import-json-btn {
+    padding:4px 10px; border-radius:5px; font-family:'Space Mono',monospace; font-size:10px;
+    cursor:pointer; transition:all 0.2s; letter-spacing:0.5px; white-space:nowrap; border:1px solid;
+  }
+  #db-save-btn { background:rgba(212,160,23,0.15); border-color:var(--border); color:var(--gold); }
   #db-save-btn:hover { background:rgba(212,160,23,0.3); }
-  #db-load-btn { background:rgba(26,107,181,0.15); border:1px solid rgba(26,107,181,0.3); color:#5AABFF; padding:4px 14px; border-radius:6px; font-family:'Space Mono',monospace; font-size:11px; cursor:pointer; transition:all 0.2s; letter-spacing:1px; }
+  #db-load-btn { background:rgba(26,107,181,0.15); border-color:rgba(26,107,181,0.3); color:#5AABFF; }
   #db-load-btn:hover { background:rgba(26,107,181,0.3); }
-  #db-clear-btn { background:rgba(192,57,43,0.1); border:1px solid rgba(192,57,43,0.3); color:#E87065; padding:4px 14px; border-radius:6px; font-family:'Space Mono',monospace; font-size:11px; cursor:pointer; transition:all 0.2s; letter-spacing:1px; }
+  #db-clear-btn { background:rgba(192,57,43,0.1); border-color:rgba(192,57,43,0.3); color:#E87065; }
   #db-clear-btn:hover { background:rgba(192,57,43,0.25); }
-  #db-export-btn { background:rgba(46,158,87,0.12); border:1px solid rgba(46,158,87,0.35); color:#4CAF7D; padding:4px 14px; border-radius:6px; font-family:'Space Mono',monospace; font-size:11px; cursor:pointer; transition:all 0.2s; letter-spacing:1px; }
+  #db-export-btn { background:rgba(46,158,87,0.12); border-color:rgba(46,158,87,0.35); color:#4CAF7D; }
   #db-export-btn:hover { background:rgba(46,158,87,0.28); }
-  #db-import-json-btn { background:rgba(90,171,255,0.1); border:1px solid rgba(90,171,255,0.3); color:#5AABFF; padding:4px 14px; border-radius:6px; font-family:'Space Mono',monospace; font-size:11px; cursor:pointer; transition:all 0.2s; letter-spacing:1px; }
+  #db-import-json-btn { background:rgba(90,171,255,0.1); border-color:rgba(90,171,255,0.3); color:#5AABFF; }
   #db-import-json-btn:hover { background:rgba(90,171,255,0.25); }
   #auto-backup-countdown { font-family:'Space Mono',monospace; font-size:10px; color:#555; white-space:nowrap; }
   #auto-backup-countdown.active { color:#4CAF7D; }
@@ -46,54 +63,51 @@
   /* ── SETUP SCREEN ── */
   #setup-screen {
     min-height:100vh; display:flex; flex-direction:column; align-items:center;
-    justify-content:center; padding:2rem 2rem 5rem; background:var(--dark);
+    justify-content:center; padding:2rem 1.5rem 5rem; background:var(--dark);
     background-image:radial-gradient(ellipse at 50% 0%, rgba(212,160,23,0.08) 0%, transparent 70%);
   }
-  .setup-logo { font-size:72px; color:var(--gold); margin-bottom:0.25rem; text-align:center; }
-  .setup-sub { font-family:'Space Mono',monospace; font-size:12px; color:var(--muted); letter-spacing:4px; margin-bottom:3rem; text-align:center; }
-  .setup-card { background:var(--dark2); border:1px solid var(--border); border-radius:16px; padding:2.5rem; width:100%; max-width:780px; }
-  .setup-section { margin-bottom:2rem; }
-  .setup-section h3 { font-size:22px; color:var(--gold); margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem; }
-  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem; }
-  .form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; margin-bottom:1rem; }
-  .form-group { display:flex; flex-direction:column; gap:6px; }
-  .form-group label { font-size:12px; color:var(--muted); letter-spacing:1px; font-family:'Space Mono',monospace; }
+  .setup-logo { font-size:clamp(40px,7vw,72px); color:var(--gold); margin-bottom:0.25rem; text-align:center; }
+  .setup-sub { font-family:'Space Mono',monospace; font-size:clamp(9px,1.5vw,12px); color:var(--muted); letter-spacing:4px; margin-bottom:2rem; text-align:center; }
+  .setup-card { background:var(--dark2); border:1px solid var(--border); border-radius:16px; padding:clamp(1.2rem,3vw,2.5rem); width:100%; max-width:820px; }
+  .setup-section { margin-bottom:1.6rem; }
+  .setup-section h3 { font-size:clamp(16px,2.5vw,22px); color:var(--gold); margin-bottom:0.8rem; border-bottom:1px solid var(--border); padding-bottom:0.4rem; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:0.8rem; }
+  .form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.8rem; margin-bottom:0.8rem; }
+  .form-group { display:flex; flex-direction:column; gap:5px; }
+  .form-group label { font-size:11px; color:var(--muted); letter-spacing:1px; font-family:'Space Mono',monospace; }
   .form-group input, .form-group select {
     background:var(--dark3); border:1px solid var(--border); border-radius:8px;
-    color:var(--text); padding:10px 14px; font-size:14px; font-family:'DM Sans',sans-serif;
-    outline:none; transition:border-color 0.2s;
+    color:var(--text); padding:10px 13px; font-size:14px; font-family:'DM Sans',sans-serif;
+    outline:none; transition:border-color 0.2s; width:100%;
   }
   .form-group input:focus, .form-group select:focus { border-color:var(--gold); }
-  .teams-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .teams-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
   .team-input-row { display:flex; gap:6px; align-items:center; }
   .team-num { font-family:'Space Mono',monospace; font-size:12px; color:var(--muted); min-width:20px; }
-  .players-section { max-height:380px; overflow-y:auto; padding-right:4px; }
-  .players-section::-webkit-scrollbar { width:4px; }
-  .players-section::-webkit-scrollbar-track { background:var(--dark3); }
-  .players-section::-webkit-scrollbar-thumb { background:var(--gold-dark); border-radius:2px; }
+  .players-section { max-height:360px; overflow-y:auto; padding-right:4px; }
 
   /* PLAYER ROW */
   .player-row {
-    display:grid; grid-template-columns:22px 1fr 85px 65px 44px 26px; gap:6px;
+    display:grid; grid-template-columns:22px 1fr 90px 68px 46px 28px; gap:6px;
     align-items:center; margin-bottom:5px; background:var(--dark3);
-    border:1px solid rgba(255,255,255,0.04); border-radius:8px; padding:5px 7px;
+    border:1px solid rgba(255,255,255,0.04); border-radius:8px; padding:6px 8px;
     transition:border-color 0.2s;
   }
   .player-row:hover { border-color:rgba(212,160,23,0.2); }
   .player-row span { font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); }
   .player-row input[type="text"], .player-row input[type="number"] {
     background:var(--dark4); border:1px solid rgba(255,255,255,0.08); border-radius:6px;
-    color:var(--text); padding:6px 8px; font-size:12px; font-family:'DM Sans',sans-serif; outline:none; width:100%;
+    color:var(--text); padding:7px 8px; font-size:12px; font-family:'DM Sans',sans-serif; outline:none; width:100%;
   }
   .player-row input:focus { border-color:var(--gold); }
   .player-row select {
     background:var(--dark4); border:1px solid rgba(255,255,255,0.08); border-radius:6px;
-    color:var(--text); padding:6px 3px; font-size:11px; outline:none; width:100%;
+    color:var(--text); padding:6px 4px; font-size:11px; outline:none; width:100%;
     font-family:'Space Mono',monospace;
   }
   .player-row-header {
-    display:grid; grid-template-columns:22px 1fr 85px 65px 44px 26px; gap:6px;
-    padding:4px 7px; margin-bottom:4px;
+    display:grid; grid-template-columns:22px 1fr 90px 68px 46px 28px; gap:6px;
+    padding:4px 8px; margin-bottom:4px;
   }
   .player-row-header span { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:1px; }
 
@@ -148,22 +162,22 @@
   #auction-screen { display:none; min-height:100vh; background:var(--dark); }
   .auction-header {
     display:flex; align-items:center; justify-content:space-between;
-    padding:0.8rem 1.5rem; background:var(--dark2); border-bottom:1px solid rgba(212,160,23,0.2);
-    position:sticky; top:0; z-index:100; gap:1rem; flex-wrap:wrap;
+    padding:0.7rem 1.2rem; background:var(--dark2); border-bottom:1px solid rgba(212,160,23,0.2);
+    position:sticky; top:0; z-index:100; gap:0.8rem; flex-wrap:wrap;
     box-shadow:0 2px 16px rgba(0,0,0,0.4);
   }
-  .auction-logo { font-size:24px; color:var(--gold); letter-spacing:2px; }
-  .auction-stats { display:flex; gap:1.2rem; }
-  .stat { text-align:center; background:var(--dark3); padding:6px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.06); }
-  .stat-val { font-family:'Space Mono',monospace; font-size:18px; color:var(--gold); font-weight:700; line-height:1.2; }
-  .stat-lbl { font-size:9px; color:#777; letter-spacing:1.5px; text-transform:uppercase; }
-  .auction-body { display:grid; grid-template-columns:1fr 350px; min-height:calc(100vh - 66px); }
+  .auction-logo { font-size:clamp(18px,3vw,24px); color:var(--gold); letter-spacing:2px; white-space:nowrap; }
+  .auction-stats { display:flex; gap:0.8rem; flex-wrap:wrap; }
+  .stat { text-align:center; background:var(--dark3); padding:5px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.06); min-width:60px; }
+  .stat-val { font-family:'Space Mono',monospace; font-size:clamp(14px,2vw,18px); color:var(--gold); font-weight:700; line-height:1.2; }
+  .stat-lbl { font-size:9px; color:#777; letter-spacing:1px; text-transform:uppercase; }
+  .auction-body { display:grid; grid-template-columns:1fr 340px; min-height:calc(100vh - 60px); }
 
   /* CENTER STAGE */
-  .center-stage { padding:1.5rem; display:flex; flex-direction:column; align-items:center; gap:1.2rem; padding-bottom:5rem; }
+  .center-stage { padding:1.2rem 1.5rem; display:flex; flex-direction:column; align-items:center; gap:1rem; padding-bottom:5rem; }
   .player-spotlight {
     background:var(--dark2); border:1px solid rgba(212,160,23,0.22); border-radius:22px;
-    padding:2rem; width:100%; max-width:560px; text-align:center;
+    padding:clamp(1.2rem,3vw,2rem); width:100%; max-width:580px; text-align:center;
     background-image:radial-gradient(ellipse at 50% 0%, rgba(212,160,23,0.07) 0%, transparent 65%);
     box-shadow:0 4px 32px rgba(0,0,0,0.4);
   }
@@ -174,7 +188,7 @@
     padding:4px 14px; border-radius:20px; border:1px solid rgba(255,255,255,0.06);
   }
   .player-avatar {
-    width:120px; height:120px; border-radius:50%; margin:0 auto 1rem;
+    width:clamp(80px,12vw,120px); height:clamp(80px,12vw,120px); border-radius:50%; margin:0 auto 1rem;
     border:3px solid var(--gold); overflow:hidden; position:relative;
     background:var(--dark3); display:flex; align-items:center; justify-content:center;
     cursor:pointer; transition:transform 0.2s, box-shadow 0.2s;
@@ -182,38 +196,38 @@
   }
   .player-avatar:hover { transform:scale(1.05); box-shadow:0 0 0 6px rgba(212,160,23,0.15), 0 0 30px rgba(212,160,23,0.3); }
   .player-avatar img { width:100%; height:100%; object-fit:cover; }
-  .player-avatar-initials { font-family:'Bebas Neue',sans-serif; font-size:42px; color:var(--gold); }
-  .player-name { font-size:42px; color:var(--text); margin-bottom:0.25rem; line-height:1.1; }
-  .player-role-tag { display:inline-block; padding:5px 18px; border-radius:20px; font-family:'Space Mono',monospace; font-size:12px; margin-bottom:1.5rem; letter-spacing:1px; }
-  .base-price-row { display:flex; gap:2rem; justify-content:center; margin-bottom:1.5rem; }
-  .price-info { text-align:center; background:var(--dark3); padding:10px 20px; border-radius:12px; border:1px solid rgba(255,255,255,0.06); min-width:120px; }
+  .player-avatar-initials { font-family:'Bebas Neue',sans-serif; font-size:clamp(28px,5vw,42px); color:var(--gold); }
+  .player-name { font-size:clamp(28px,5vw,42px); color:var(--text); margin-bottom:0.25rem; line-height:1.1; }
+  .player-role-tag { display:inline-block; padding:5px 18px; border-radius:20px; font-family:'Space Mono',monospace; font-size:12px; margin-bottom:1.2rem; letter-spacing:1px; }
+  .base-price-row { display:flex; gap:1.5rem; justify-content:center; margin-bottom:1.2rem; flex-wrap:wrap; }
+  .price-info { text-align:center; background:var(--dark3); padding:10px 18px; border-radius:12px; border:1px solid rgba(255,255,255,0.06); min-width:110px; }
   .price-info-lbl { font-size:10px; color:#666; letter-spacing:1.5px; margin-bottom:6px; font-family:'Space Mono',monospace; }
-  .price-info-val { font-family:'Space Mono',monospace; font-size:22px; color:var(--gold-light); font-weight:700; }
+  .price-info-val { font-family:'Space Mono',monospace; font-size:clamp(16px,2.5vw,22px); color:var(--gold-light); font-weight:700; }
 
   /* BID SECTION */
-  .bid-section { width:100%; max-width:560px; }
+  .bid-section { width:100%; max-width:580px; }
   .bid-header {
-    font-size:11px; color:#777; margin-bottom:0.75rem; text-align:center;
+    font-size:11px; color:#777; margin-bottom:0.6rem; text-align:center;
     letter-spacing:2px; font-family:'Space Mono',monospace;
   }
-  .bid-form { display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:end; }
+  .bid-form { display:grid; grid-template-columns:1fr 1fr auto; gap:8px; align-items:end; }
   .bid-select, .bid-input {
-    background:var(--dark2); border:1px solid rgba(255,255,255,0.1); border-radius:10px;
-    color:var(--text); padding:12px 14px; font-size:14px; font-family:'DM Sans',sans-serif;
-    outline:none; transition:border-color 0.2s, box-shadow 0.2s;
+    background:var(--dark2); border:1px solid rgba(255,255,255,0.12); border-radius:10px;
+    color:var(--text); padding:12px 13px; font-size:14px; font-family:'DM Sans',sans-serif;
+    outline:none; transition:border-color 0.2s, box-shadow 0.2s; width:100%;
   }
   .bid-select:focus, .bid-input:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,160,23,0.1); }
   .bid-select option { background:var(--dark2); }
   .btn-sold {
     background:linear-gradient(135deg,#1a8a46,var(--green-light)); color:#fff; border:none;
-    padding:12px 22px; border-radius:10px; font-family:'Bebas Neue',sans-serif;
-    font-size:20px; letter-spacing:2px; cursor:pointer; white-space:nowrap;
+    padding:12px 20px; border-radius:10px; font-family:'Bebas Neue',sans-serif;
+    font-size:18px; letter-spacing:2px; cursor:pointer; white-space:nowrap;
     transition:all 0.2s; box-shadow:0 2px 12px rgba(46,158,87,0.3);
   }
   .btn-sold:hover { background:linear-gradient(135deg,#1fa854,#37B96A); box-shadow:0 4px 18px rgba(46,158,87,0.5); transform:translateY(-1px); }
   .btn-skip {
     background:var(--dark2); color:#aaa; border:1px solid rgba(255,255,255,0.1);
-    padding:11px 16px; border-radius:10px; font-family:'Space Mono',monospace;
+    padding:11px 14px; border-radius:10px; font-family:'Space Mono',monospace;
     font-size:11px; cursor:pointer; transition:all 0.2s; flex:1; letter-spacing:0.5px;
   }
   .btn-skip:hover { border-color:rgba(255,255,255,0.25); color:var(--text); background:var(--dark3); }
@@ -282,18 +296,16 @@
   #img-popup-close:hover { background:var(--red); border-color:var(--red); }
 
   /* SIDEBAR */
-  .sidebar { background:var(--dark2); border-left:1px solid rgba(212,160,23,0.15); display:flex; flex-direction:column; overflow:hidden; }
+  .sidebar { background:var(--dark2); border-left:1px solid rgba(212,160,23,0.15); display:flex; flex-direction:column; overflow:hidden; min-width:0; }
   .sidebar-tabs { display:flex; border-bottom:1px solid rgba(212,160,23,0.15); }
   .tab-btn {
-    flex:1; padding:14px 0; background:transparent; border:none; color:#777;
-    font-family:'Space Mono',monospace; font-size:11px; letter-spacing:1.5px; cursor:pointer;
+    flex:1; padding:13px 0; background:transparent; border:none; color:#777;
+    font-family:'Space Mono',monospace; font-size:10px; letter-spacing:1px; cursor:pointer;
     border-bottom:2px solid transparent; transition:all 0.2s;
   }
   .tab-btn:hover { color:#bbb; background:rgba(255,255,255,0.02); }
   .tab-btn.active { color:var(--gold); border-bottom-color:var(--gold); background:rgba(212,160,23,0.06); }
-  .tab-content { flex:1; overflow-y:auto; padding:1rem 0.9rem 5rem; }
-  .tab-content::-webkit-scrollbar { width:4px; }
-  .tab-content::-webkit-scrollbar-thumb { background:var(--gold-dark); border-radius:2px; }
+  .tab-content { flex:1; overflow-y:auto; padding:0.9rem 0.8rem 5rem; }
   .tab-pane { display:none; }
   .tab-pane.active { display:block; }
 
@@ -353,12 +365,12 @@
 
   /* DONE SCREEN */
   #done-screen {
-    display:none; min-height:100vh; padding:3rem 2rem 5rem;
+    display:none; min-height:100vh; padding:2.5rem 1.5rem 5rem;
     background:var(--dark); align-items:flex-start; justify-content:center; flex-direction:column;
     background-image:radial-gradient(ellipse at 50% 0%, rgba(212,160,23,0.08) 0%, transparent 60%);
   }
-  .done-title { font-size:68px; color:var(--gold); text-align:center; width:100%; margin-bottom:0.5rem; }
-  .done-sub { text-align:center; color:var(--muted); font-family:'Space Mono',monospace; font-size:12px; letter-spacing:3px; margin-bottom:1.5rem; }
+  .done-title { font-size:clamp(38px,7vw,68px); color:var(--gold); text-align:center; width:100%; margin-bottom:0.5rem; }
+  .done-sub { text-align:center; color:var(--muted); font-family:'Space Mono',monospace; font-size:11px; letter-spacing:3px; margin-bottom:1.5rem; }
   #reauction-banner {
     display:none; background:rgba(212,160,23,0.1); border:1px solid var(--border);
     border-radius:12px; padding:1rem 1.5rem; margin:0 auto 2rem; max-width:800px; width:100%; text-align:center;
@@ -367,11 +379,11 @@
   #reauction-banner p { color:var(--muted); font-size:13px; font-family:'Space Mono',monospace; margin-bottom:0.8rem; }
   .btn-reauction { background:var(--gold); color:var(--dark); border:none; padding:10px 28px; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; cursor:pointer; transition:background 0.2s; }
   .btn-reauction:hover { background:var(--gold-light); }
-  .done-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr)); gap:1.5rem; width:100%; max-width:1200px; margin:0 auto; }
-  .done-team-card { background:var(--dark2); border:1px solid var(--border); border-radius:16px; padding:1.5rem; }
-  .done-team-name { font-size:26px; color:var(--gold); margin-bottom:0.2rem; }
-  .done-team-spent { font-family:'Space Mono',monospace; font-size:12px; color:var(--muted); margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid var(--border); }
-  .done-player-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:13px; }
+  .done-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:1.2rem; width:100%; max-width:1300px; margin:0 auto; }
+  .done-team-card { background:var(--dark2); border:1px solid var(--border); border-radius:16px; padding:0; overflow:hidden; }
+  .done-team-name { font-size:clamp(20px,3vw,26px); color:var(--gold); margin-bottom:0.2rem; padding:16px 18px 2px; }
+  .done-team-spent { font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); margin-bottom:0; padding:0 18px 10px; border-bottom:1px solid var(--border); }
+  .done-player-row { display:flex; justify-content:space-between; align-items:center; padding:7px 18px; border-bottom:1px solid rgba(255,255,255,0.04); font-size:13px; }
   .done-player-row:last-child { border-bottom:none; }
   .done-player-left { display:flex; align-items:center; gap:8px; }
   .done-player-thumb {
@@ -383,10 +395,88 @@
   .done-player-thumb img { width:100%; height:100%; object-fit:cover; }
   .done-player-role { font-size:10px; color:var(--muted); font-family:'Space Mono',monospace; }
   .done-player-price { font-family:'Space Mono',monospace; font-size:12px; color:var(--gold); }
-  .done-actions { display:flex; gap:1rem; justify-content:center; width:100%; margin-top:2rem; flex-wrap:wrap; }
-  .btn-restart { background:var(--gold); color:var(--dark); border:none; padding:13px 36px; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; cursor:pointer; }
-  .btn-export { background:transparent; color:var(--gold); border:1px solid var(--border); padding:13px 28px; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; cursor:pointer; transition:all 0.2s; }
+  .done-actions { display:flex; gap:0.8rem; justify-content:center; width:100%; margin-top:2rem; flex-wrap:wrap; }
+  .btn-restart { background:var(--gold); color:var(--dark); border:none; padding:13px 30px; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; cursor:pointer; }
+  .btn-export { background:transparent; color:var(--gold); border:1px solid var(--border); padding:13px 24px; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; cursor:pointer; transition:all 0.2s; }
   .btn-export:hover { background:rgba(212,160,23,0.1); }
+
+  /* ── TEAM IMAGE UPLOAD (setup) ── */
+  .team-img-upload-btn {
+    width:34px; height:34px; border-radius:7px;
+    border:2px dashed rgba(212,160,23,0.4);
+    background:var(--dark4); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; transition:all 0.2s; position:relative;
+    overflow:hidden; flex-shrink:0; title:'Add team poster';
+  }
+  .team-img-upload-btn:hover { border-color:var(--gold); background:rgba(212,160,23,0.1); }
+  .team-img-upload-btn.has-image { border-style:solid; border-color:var(--green-light); }
+  .team-img-upload-btn input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; padding:0; border:none; background:transparent; }
+
+  /* ── TEAM CARD with poster background ── */
+  .team-card {
+    position:relative; overflow:hidden;
+    background:var(--dark3); border-radius:12px;
+    border:1px solid rgba(255,255,255,0.06);
+    margin-bottom:8px; transition:border-color 0.2s;
+  }
+  .team-card:hover { border-color:rgba(212,160,23,0.2); }
+  .team-card-poster {
+    position:absolute; inset:0;
+    background-size:cover; background-position:center top;
+    background-repeat:no-repeat;
+    opacity:0; transition:opacity 0.4s;
+    pointer-events:none;
+  }
+  .team-card-poster.visible { opacity:1; }
+  /* Dark overlay so text stays readable over the poster */
+  .team-card-poster::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(135deg,
+      rgba(13,13,13,0.82) 0%,
+      rgba(13,13,13,0.65) 50%,
+      rgba(13,13,13,0.45) 100%);
+  }
+  /* Ensure text content sits above the poster */
+  .team-card-header,
+  .team-players-count,
+  .team-cap-bar,
+  .team-bought-list { position:relative; z-index:1; }
+
+  .team-card-header {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 13px 4px;
+  }
+  .team-card-name { font-size:14px; font-weight:600; color:var(--text); }
+  .team-wallet { font-family:'Space Mono',monospace; font-size:13px; color:var(--gold); }
+  .team-players-count { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); padding:0 13px 4px; letter-spacing:0.5px; }
+  .team-cap-bar { height:3px; background:rgba(255,255,255,0.06); margin:2px 13px 6px; border-radius:2px; }
+  .team-cap-fill { height:100%; background:var(--gold); border-radius:2px; transition:width 0.4s; }
+  .team-cap-fill.full { background:var(--red); }
+  .team-bought-list { display:flex; flex-wrap:wrap; gap:4px; padding:0 13px 10px; }
+  .bought-chip { font-size:11px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.1); border-radius:5px; padding:3px 7px; color:var(--text); }
+
+  /* ── DONE SCREEN team card with poster ── */
+  .done-team-card {
+    position:relative; overflow:hidden;
+    background:var(--dark2); border:1px solid rgba(255,255,255,0.07);
+    border-radius:16px; padding:0;
+  }
+  .done-team-poster {
+    position:absolute; inset:0;
+    background-size:cover; background-position:center top;
+    background-repeat:no-repeat;
+    opacity:0; transition:opacity 0.4s; pointer-events:none;
+  }
+  .done-team-poster.visible { opacity:1; }
+  .done-team-poster::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(160deg,
+      rgba(13,13,13,0.88) 0%,
+      rgba(13,13,13,0.72) 40%,
+      rgba(13,13,13,0.5) 100%);
+  }
+  .done-team-name, .done-team-spent, .done-player-row { position:relative; z-index:1; }
 
   /* MISC */
   @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(212,160,23,0.4);}50%{box-shadow:0 0 0 12px rgba(212,160,23,0);} }
@@ -435,8 +525,6 @@
   .remove-sale-card h3 { font-size:22px; color:#5AABFF; margin-bottom:0.3rem; }
   .remove-sale-card p { font-size:11px; color:var(--muted); font-family:'Space Mono',monospace; margin-bottom:1rem; }
   .remove-sale-list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px; padding-right:4px; }
-  .remove-sale-list::-webkit-scrollbar { width:3px; }
-  .remove-sale-list::-webkit-scrollbar-thumb { background:var(--gold-dark); border-radius:2px; }
   .remove-sale-item { display:flex; justify-content:space-between; align-items:center; padding:10px 13px; background:var(--dark3); border:1px solid rgba(255,255,255,0.06); border-radius:10px; gap:10px; }
   .remove-sale-info { flex:1; min-width:0; }
   .remove-sale-name { font-size:14px; color:var(--text); }
@@ -503,14 +591,408 @@
     .rwp-item { min-width:calc(50% - 4px); }
   }
 
-  @media (max-width:768px) {
+  /* ── RESPONSIVE BREAKPOINTS ── */
+
+  /* Tablet portrait & small landscape (≤900px) */
+  @media (max-width:900px) {
     .auction-body { grid-template-columns:1fr; }
-    .sidebar { border-left:none; border-top:1px solid var(--border); }
-    .bid-form { grid-template-columns:1fr 1fr; }
+    .sidebar {
+      border-left:none; border-top:2px solid rgba(212,160,23,0.2);
+      max-height:50vh;
+    }
+    .tab-content { max-height:calc(50vh - 50px); }
+    .center-stage { padding:1rem; }
+    .player-spotlight { padding:1.2rem; }
+    .bid-form { grid-template-columns:1fr 1fr; gap:8px; }
     .btn-sold { grid-column:1/-1; }
-    .player-row { grid-template-columns:18px 1fr 70px 58px 38px 24px; gap:4px; }
-    .player-row-header { grid-template-columns:18px 1fr 70px 58px 38px 24px; gap:4px; }
+    .form-row-3 { grid-template-columns:1fr 1fr; }
+    .teams-grid { grid-template-columns:1fr; }
+    .trn-pools-row { grid-template-columns:1fr 1fr; }
+    .trn-pts-row { grid-template-columns:1fr 1fr 1fr; }
+    .done-grid { grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); }
+    #tournament-screen { padding:1.5rem 1rem 5rem; }
   }
+
+  /* Mobile portrait (≤600px) */
+  @media (max-width:600px) {
+    .setup-card { padding:1rem; border-radius:12px; }
+    .form-row { grid-template-columns:1fr; }
+    .form-row-3 { grid-template-columns:1fr; }
+    .teams-grid { grid-template-columns:1fr; }
+    .player-row { grid-template-columns:20px 1fr 72px 56px 38px 22px; gap:4px; padding:5px 5px; }
+    .player-row-header { grid-template-columns:20px 1fr 72px 56px 38px 22px; gap:4px; }
+    .bid-form { grid-template-columns:1fr; }
+    .btn-sold { grid-column:1; }
+    .auction-header { padding:0.5rem 0.8rem; gap:6px; }
+    .auction-stats { gap:0.4rem; }
+    .stat { padding:4px 8px; min-width:50px; }
+    .stat-val { font-size:14px; }
+    .base-price-row { gap:0.8rem; }
+    .price-info { padding:8px 12px; min-width:90px; }
+    .sold-card { padding:1.5rem; }
+    .done-grid { grid-template-columns:1fr; }
+    .trn-pools-row { grid-template-columns:1fr; }
+    .trn-pts-row { grid-template-columns:1fr; }
+    .trn-format-grid { grid-template-columns:1fr; }
+    .trn-setup-card { padding:1.2rem; border-radius:14px; }
+    .trn-setup-card h3 { font-size:24px; }
+    .trn-pool-teams { grid-template-columns:1fr; }
+    .trn-tabs { flex-wrap:wrap; gap:4px; }
+    .trn-tab-btn { padding:8px 14px; font-size:10px; }
+    .trn-matches-grid { grid-template-columns:1fr; }
+    .trn-pools-wrap { grid-template-columns:1fr; }
+    .trn-stat { min-width:100px; padding:10px 16px; }
+    .done-actions { flex-direction:column; align-items:stretch; }
+    .btn-restart, .btn-export { text-align:center; }
+    .trn-actions { flex-direction:column; }
+    .btn-trn-back, .btn-trn-export { text-align:center; }
+  }
+
+  /* Landscape phone (short height) */
+  @media (max-height:500px) and (orientation:landscape) {
+    .auction-body { grid-template-columns:1fr 300px; }
+    .sidebar { max-height:100vh; }
+    .tab-content { max-height:calc(100vh - 100px); }
+    .player-spotlight { padding:0.8rem 1.2rem; }
+    .player-avatar { width:70px; height:70px; margin-bottom:0.5rem; }
+    .player-name { font-size:28px; margin-bottom:0.1rem; }
+    .player-role-tag { margin-bottom:0.6rem; }
+    .base-price-row { margin-bottom:0.6rem; gap:1rem; }
+    .center-stage { gap:0.6rem; padding:0.8rem; }
+    .setup-logo { font-size:36px; }
+    .setup-sub { margin-bottom:1rem; }
+    .trn-header { margin-bottom:1rem; }
+    .trn-title { font-size:42px; }
+    #tournament-screen { padding:1rem 1.5rem 4rem; }
+  }
+
+  /* ══ TOURNAMENT SCREEN ══ */
+  #tournament-screen {
+    display:none; min-height:100vh; padding:2rem 2rem 6rem;
+    background:var(--dark);
+    background-image:radial-gradient(ellipse at 50% 0%, rgba(26,107,181,0.09) 0%, transparent 65%);
+  }
+  .trn-header { text-align:center; margin-bottom:2rem; }
+  .trn-title { font-size:clamp(36px,6vw,64px); color:var(--gold); letter-spacing:4px; }
+  .trn-sub { font-family:'Space Mono',monospace; font-size:clamp(9px,1.5vw,12px); color:var(--muted); letter-spacing:4px; margin-top:4px; }
+
+  /* ── SETUP MODAL: full-screen landscape ── */
+  #trn-setup-modal {
+    position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:800;
+    display:none; align-items:center; justify-content:center;
+    backdrop-filter:blur(6px); overflow-y:auto; padding:1rem;
+  }
+  #trn-setup-modal.show { display:flex; }
+  .trn-setup-card {
+    background:var(--dark2); border:1px solid rgba(26,107,181,0.45); border-radius:20px;
+    padding:clamp(1.2rem,3vw,2.5rem) clamp(1.2rem,3vw,3rem); width:100%; max-width:960px;
+    box-shadow:0 12px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(26,107,181,0.1);
+    margin:auto;
+  }
+  .trn-setup-card h3 {
+    font-size:clamp(22px,4vw,34px); color:#5AABFF; margin-bottom:0.2rem; letter-spacing:2px;
+  }
+  .trn-setup-card > p {
+    font-size:11px; color:var(--muted); font-family:'Space Mono',monospace;
+    margin-bottom:1.5rem; letter-spacing:1px;
+  }
+
+  /* Format selector — big landscape cards */
+  .trn-format-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1.6rem;
+  }
+  .trn-format-btn {
+    padding:clamp(14px,2.5vw,22px) 20px; border-radius:14px; border:2px solid rgba(255,255,255,0.1);
+    background:var(--dark3); color:var(--text); cursor:pointer;
+    text-align:center; transition:all 0.2s; font-family:'DM Sans',sans-serif;
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+  }
+  .trn-format-btn:hover { border-color:rgba(90,171,255,0.5); background:rgba(26,107,181,0.12); }
+  .trn-format-btn.selected {
+    border-color:#5AABFF; background:rgba(26,107,181,0.22); color:#5AABFF;
+    box-shadow:0 0 0 4px rgba(90,171,255,0.08);
+  }
+  .trn-format-icon { font-size:clamp(22px,4vw,34px); }
+  .trn-format-name { font-family:'Bebas Neue',sans-serif; font-size:clamp(16px,2.5vw,22px); letter-spacing:2px; }
+  .trn-format-desc { font-size:11px; color:var(--muted); font-family:'Space Mono',monospace; }
+
+  /* Landscape 3-col rows for fields */
+  .trn-pools-row {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:1.4rem;
+  }
+  .trn-field-group { display:flex; flex-direction:column; gap:7px; }
+  .trn-field-group label {
+    font-size:11px; color:var(--muted); font-family:'Space Mono',monospace;
+    letter-spacing:1.5px; text-transform:uppercase;
+  }
+  .trn-field-group input,
+  .trn-field-group select {
+    background:var(--dark3); border:1.5px solid var(--border); border-radius:10px;
+    color:var(--text); padding:12px 14px; font-size:14px; outline:none;
+    transition:border-color 0.2s, box-shadow 0.2s; width:100%;
+    font-family:'DM Sans',sans-serif;
+  }
+  .trn-field-group input:focus,
+  .trn-field-group select:focus {
+    border-color:#5AABFF; box-shadow:0 0 0 3px rgba(90,171,255,0.12);
+  }
+  .trn-field-group select { cursor:pointer; }
+
+  /* Pool assignment — big chips */
+  .trn-pool-assign { display:none; margin-bottom:1.4rem; }
+  .trn-pool-assign.show { display:block; }
+  .trn-pool-assign-title {
+    font-size:11px; color:var(--muted); font-family:'Space Mono',monospace;
+    letter-spacing:1.5px; margin-bottom:10px; text-transform:uppercase;
+  }
+  .trn-pool-teams { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; }
+  .trn-pool-tag {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 14px; border-radius:10px;
+    background:var(--dark3); border:1.5px solid var(--border);
+    font-size:13px; font-family:'DM Sans',sans-serif; color:var(--text);
+    gap:8px;
+  }
+  .trn-pool-tag span { flex:1; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .trn-pool-tag select {
+    background:rgba(26,107,181,0.2); border:1px solid rgba(26,107,181,0.45);
+    color:#5AABFF; font-size:12px; font-family:'Space Mono',monospace;
+    outline:none; cursor:pointer; padding:5px 8px; border-radius:7px;
+    min-width:80px;
+  }
+
+  /* Win/Draw/Loss row — wider */
+  .trn-pts-row {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:1.6rem;
+  }
+
+  .btn-trn-generate {
+    width:100%; background:linear-gradient(135deg,#2980D8,#5AABFF); color:#fff; border:none;
+    padding:14px; border-radius:12px; font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(18px,3vw,26px); letter-spacing:3px; cursor:pointer; margin-top:0.5rem;
+    transition:all 0.2s; box-shadow:0 4px 24px rgba(90,171,255,0.35);
+  }
+  .btn-trn-generate:hover { box-shadow:0 8px 36px rgba(90,171,255,0.55); transform:translateY(-1px); }
+  .trn-err {
+    font-family:'Space Mono',monospace; font-size:12px; color:#E87065;
+    text-align:center; margin-top:8px; min-height:16px;
+  }
+
+  /* ── TOURNAMENT MAIN CONTENT ── */
+  .trn-content { max-width:1400px; margin:0 auto; }
+  .trn-summary-bar {
+    display:flex; gap:0.8rem; flex-wrap:wrap; justify-content:center; margin-bottom:2rem;
+  }
+  .trn-stat {
+    background:var(--dark2); border:1px solid rgba(26,107,181,0.35); border-radius:14px;
+    padding:12px 22px; text-align:center; flex:1; min-width:110px; max-width:220px;
+  }
+  .trn-stat-val { font-family:'Space Mono',monospace; font-size:clamp(18px,3vw,26px); color:#5AABFF; font-weight:700; }
+  .trn-stat-lbl { font-size:10px; color:var(--muted); letter-spacing:2px; margin-top:4px; text-transform:uppercase; }
+
+  /* Pool standings */
+  .trn-pools-wrap {
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+    gap:1.4rem; margin-bottom:2rem;
+  }
+  .trn-pool-card {
+    background:var(--dark2); border:1px solid rgba(26,107,181,0.25);
+    border-radius:16px; overflow:hidden;
+  }
+  .trn-pool-header {
+    padding:14px 20px; background:rgba(26,107,181,0.14);
+    border-bottom:1px solid rgba(26,107,181,0.2);
+    font-family:'Bebas Neue',sans-serif; font-size:20px; color:#5AABFF; letter-spacing:3px;
+  }
+  .trn-standings-table { width:100%; border-collapse:collapse; }
+  .trn-standings-table th {
+    font-family:'Space Mono',monospace; font-size:10px; color:var(--muted);
+    letter-spacing:1.5px; padding:9px 16px; text-align:left;
+    border-bottom:1px solid rgba(255,255,255,0.06); text-transform:uppercase;
+  }
+  .trn-standings-table th:not(:first-child) { text-align:center; }
+  .trn-standings-table td {
+    padding:11px 16px; font-size:14px; border-bottom:1px solid rgba(255,255,255,0.04);
+  }
+  .trn-standings-table td:not(:first-child) {
+    text-align:center; font-family:'Space Mono',monospace; font-size:13px;
+  }
+  .trn-standings-table tr:last-child td { border-bottom:none; }
+  .trn-standings-table tr:hover td { background:rgba(255,255,255,0.02); }
+  .trn-qual-badge {
+    display:inline-block; padding:3px 9px; border-radius:5px; font-size:10px;
+    font-family:'Space Mono',monospace; background:rgba(26,107,58,0.28);
+    color:#4CAF7D; border:1px solid rgba(26,107,58,0.45); margin-left:7px;
+    letter-spacing:1px;
+  }
+
+  /* Fixtures */
+  .trn-section-title {
+    font-family:'Bebas Neue',sans-serif; font-size:30px; color:var(--gold);
+    letter-spacing:3px; margin-bottom:1.2rem; padding-bottom:0.6rem;
+    border-bottom:2px solid rgba(212,160,23,0.2);
+  }
+  .trn-rounds-wrap { display:flex; flex-direction:column; gap:1.6rem; margin-bottom:3rem; }
+  .trn-round-label {
+    font-family:'Space Mono',monospace; font-size:12px; color:var(--muted);
+    letter-spacing:3px; margin-bottom:10px; text-transform:uppercase;
+    display:flex; align-items:center; gap:10px;
+  }
+  .trn-round-label::after {
+    content:''; flex:1; height:1px; background:rgba(255,255,255,0.06);
+  }
+  /* Match cards: responsive grid — max 3 columns, cards don't over-stretch */
+  .trn-matches-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));
+    gap:14px;
+  }
+  .trn-match-card {
+    background:var(--dark2); border:1.5px solid rgba(255,255,255,0.07);
+    border-radius:14px; padding:0; overflow:hidden;
+    transition:border-color 0.2s, transform 0.15s;
+    display:flex; flex-direction:column;
+    max-width:560px; /* never stretch too wide on huge screens */
+  }
+  .trn-match-card:hover { border-color:rgba(212,160,23,0.35); transform:translateY(-1px); }
+
+  /* Card top: teams vs teams */
+  .trn-match-top {
+    display:grid; grid-template-columns:1fr auto 1fr;
+    align-items:center; gap:12px; padding:18px 22px 14px;
+  }
+  .trn-match-team-a { text-align:left; }
+  .trn-match-team-b { text-align:right; }
+  .trn-match-team-name {
+    font-size:clamp(14px,1.4vw,17px); color:var(--text); font-weight:600;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .trn-match-pool-badge {
+    display:inline-block; font-size:10px; color:var(--muted);
+    font-family:'Space Mono',monospace; margin-top:3px;
+  }
+  .trn-vs {
+    font-family:'Bebas Neue',sans-serif; font-size:clamp(18px,2vw,24px); color:var(--gold);
+    flex-shrink:0; text-align:center; background:rgba(212,160,23,0.08);
+    padding:7px 16px; border-radius:8px;
+  }
+  .trn-match-num {
+    font-family:'Space Mono',monospace; font-size:9px; color:#444;
+    text-align:right; padding:0 22px 4px; letter-spacing:1px;
+  }
+
+  /* Card bottom: score entry or result */
+  .trn-match-bottom {
+    border-top:1px solid rgba(255,255,255,0.05);
+    padding:14px 22px; background:rgba(0,0,0,0.15);
+  }
+  .trn-score-form {
+    display:grid; grid-template-columns:1fr auto 1fr auto auto;
+    align-items:center; gap:10px;
+  }
+  .trn-score-inp {
+    background:var(--dark3); border:1.5px solid var(--border);
+    border-radius:8px; color:var(--text); padding:10px 12px;
+    font-family:'Space Mono',monospace; font-size:clamp(13px,1.2vw,16px); text-align:center;
+    outline:none; transition:border-color 0.2s, box-shadow 0.2s; width:100%;
+    min-width:0;
+  }
+  .trn-score-inp:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,160,23,0.1); }
+  .trn-score-inp::placeholder { color:#555; }
+  .trn-score-sep {
+    font-family:'Space Mono',monospace; font-size:12px; color:#555; text-align:center; flex-shrink:0;
+  }
+  .btn-trn-result {
+    background:rgba(212,160,23,0.18); border:1.5px solid rgba(212,160,23,0.45);
+    color:var(--gold); padding:10px 18px; border-radius:8px;
+    font-family:'Bebas Neue',sans-serif; font-size:clamp(14px,1.2vw,17px); letter-spacing:1px;
+    cursor:pointer; transition:all 0.2s; white-space:nowrap;
+  }
+  .btn-trn-result:hover { background:rgba(212,160,23,0.35); }
+  .btn-trn-draw {
+    background:rgba(90,171,255,0.12); border:1.5px solid rgba(90,171,255,0.35);
+    color:#5AABFF; padding:10px 16px; border-radius:8px;
+    font-family:'Bebas Neue',sans-serif; font-size:clamp(14px,1.2vw,17px); letter-spacing:1px;
+    cursor:pointer; transition:all 0.2s; white-space:nowrap;
+  }
+  .btn-trn-draw:hover { background:rgba(90,171,255,0.28); }
+
+  .trn-result-display {
+    text-align:center; font-family:'Space Mono',monospace; font-size:clamp(11px,1vw,13px);
+    color:var(--green-light); background:rgba(26,107,58,0.14);
+    border:1px solid rgba(26,107,58,0.3); border-radius:8px;
+    padding:10px 16px; letter-spacing:0.5px;
+  }
+
+  /* Large screen: wrap grid so cards don't expand beyond readable width */
+  @media (min-width:1200px) {
+    .trn-matches-grid {
+      grid-template-columns:repeat(auto-fill,minmax(380px,480px));
+    }
+    .trn-match-team-name { font-size:16px; }
+    .trn-score-inp { font-size:15px; padding:11px 14px; }
+    .btn-trn-result { font-size:16px; padding:11px 20px; }
+    .btn-trn-draw  { font-size:16px; padding:11px 18px; }
+    .trn-vs { font-size:22px; padding:8px 18px; }
+  }
+
+  @media (min-width:1600px) {
+    .trn-matches-grid {
+      grid-template-columns:repeat(auto-fill,minmax(420px,500px));
+    }
+  }
+
+  /* Tabs */
+  .trn-tabs { display:flex; gap:6px; margin-bottom:2rem; }
+  .trn-tab-btn {
+    padding:10px 28px; border-radius:24px; border:1.5px solid rgba(255,255,255,0.1);
+    background:var(--dark3); color:#888; font-family:'Space Mono',monospace;
+    font-size:12px; cursor:pointer; transition:all 0.2s; letter-spacing:1.5px;
+  }
+  .trn-tab-btn:hover { color:var(--text); border-color:rgba(255,255,255,0.25); }
+  .trn-tab-btn.active {
+    background:rgba(212,160,23,0.18); color:var(--gold);
+    border-color:rgba(212,160,23,0.5);
+  }
+  .trn-tab-pane { display:none; }
+  .trn-tab-pane.active { display:block; }
+
+  /* Knockout bracket */
+  .trn-bracket-wrap { overflow-x:auto; padding-bottom:1.5rem; }
+  .trn-bracket { display:flex; gap:2.5rem; align-items:flex-start; min-width:max-content; }
+  .trn-bracket-round { display:flex; flex-direction:column; gap:0; min-width:240px; }
+  .trn-bracket-round-title {
+    font-family:'Bebas Neue',sans-serif; font-size:16px; color:#5AABFF;
+    letter-spacing:2px; margin-bottom:12px; text-align:center;
+  }
+  .trn-bracket-match {
+    background:var(--dark2); border:1.5px solid rgba(255,255,255,0.08);
+    border-radius:12px; padding:12px 16px; margin-bottom:20px;
+  }
+  .trn-bracket-match-team {
+    font-size:13px; padding:5px 0; color:var(--text);
+    display:flex; justify-content:space-between;
+  }
+  .trn-bracket-match-team.winner { color:var(--gold); font-weight:700; }
+  .trn-bracket-match-team.tbd { color:#444; font-style:italic; }
+  .trn-bracket-divider { height:1px; background:rgba(255,255,255,0.07); margin:3px 0; }
+
+  .trn-actions {
+    display:flex; gap:0.8rem; justify-content:center; margin-top:2rem; flex-wrap:wrap; padding:0 1rem;
+  }
+  .btn-trn-back {
+    background:transparent; color:var(--gold); border:1.5px solid var(--border);
+    padding:11px 24px; border-radius:12px; font-family:'Bebas Neue',sans-serif;
+    font-size:18px; letter-spacing:2px; cursor:pointer; transition:all 0.2s; white-space:nowrap;
+  }
+  .btn-trn-back:hover { background:rgba(212,160,23,0.1); border-color:var(--gold); }
+  .btn-trn-export {
+    background:rgba(26,107,181,0.2); color:#5AABFF;
+    border:1.5px solid rgba(26,107,181,0.45); padding:11px 24px;
+    border-radius:12px; font-family:'Bebas Neue',sans-serif;
+    font-size:18px; letter-spacing:2px; cursor:pointer; transition:all 0.2s; white-space:nowrap;
+  }
+  .btn-trn-export:hover { background:rgba(26,107,181,0.4); }
 
   /* ── WELCOME / LOGIN SCREEN ── */
   #welcome-screen {
@@ -714,6 +1196,7 @@
     <!-- Teams -->
     <div class="setup-section">
       <h3>🏟️ Team Names</h3>
+      <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:7px;">🖼 Click the image icon beside each team to upload a poster / banner that appears as a background</div>
       <div class="teams-grid" id="teams-grid"></div>
       <button class="btn-add-row" onclick="addTeamRow()">＋ ADD TEAM</button>
     </div>
@@ -860,7 +1343,133 @@
   <div class="done-grid" id="done-grid"></div>
   <div class="done-actions">
     <button class="btn-export" onclick="exportResults()">📋 EXPORT RESULTS</button>
+    <button class="btn-export" onclick="openTournamentSetup()" style="background:rgba(26,107,181,0.15);color:#5AABFF;border-color:rgba(26,107,181,0.4);">🏆 SET UP TOURNAMENT</button>
     <button class="btn-restart" onclick="location.reload()">🏏 NEW AUCTION</button>
+  </div>
+</div>
+
+<!-- TOURNAMENT SETUP MODAL -->
+<div id="trn-setup-modal">
+  <div class="trn-setup-card">
+    <h3>🏆 TOURNAMENT SETUP</h3>
+    <p>Configure the format and qualification rules for your tournament</p>
+
+    <!-- FORMAT SELECTOR -->
+    <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;letter-spacing:2px;margin-bottom:12px;text-transform:uppercase;">Select Format</div>
+    <div class="trn-format-grid">
+      <div class="trn-format-btn selected" id="fmt-league" onclick="selectFormat('league')">
+        <div class="trn-format-icon">🔁</div>
+        <div class="trn-format-name">League</div>
+        <div class="trn-format-desc">All teams play each other · top N advance</div>
+      </div>
+      <div class="trn-format-btn" id="fmt-pool" onclick="selectFormat('pool')">
+        <div class="trn-format-icon">🎱</div>
+        <div class="trn-format-name">Pool</div>
+        <div class="trn-format-desc">Split into groups, then knockout stage</div>
+      </div>
+    </div>
+
+    <!-- POOL OPTIONS -->
+    <div id="trn-pool-options" style="display:none;">
+      <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;letter-spacing:2px;margin-bottom:14px;text-transform:uppercase;padding-top:4px;">Pool Configuration</div>
+      <div class="trn-pools-row">
+        <div class="trn-field-group">
+          <label>Number of Pools</label>
+          <select id="trn-num-pools" onchange="renderPoolAssign()">
+            <option value="2">2 Pools (A &amp; B)</option>
+            <option value="3">3 Pools (A, B &amp; C)</option>
+            <option value="4">4 Pools (A, B, C &amp; D)</option>
+          </select>
+        </div>
+        <div class="trn-field-group">
+          <label>Teams Qualify Per Pool</label>
+          <input type="number" id="trn-qualify-per-pool" value="2" min="1" max="6" placeholder="e.g. 2">
+        </div>
+        <div class="trn-field-group">
+          <label>Minimum Points to Qualify</label>
+          <input type="number" id="trn-qualify-points" value="4" min="0" max="30" placeholder="e.g. 4">
+        </div>
+      </div>
+      <div class="trn-pool-assign show" id="trn-pool-assign">
+        <div class="trn-pool-assign-title">Assign Teams to Pools</div>
+        <div class="trn-pool-teams" id="trn-pool-teams-wrap"></div>
+      </div>
+    </div>
+
+    <!-- LEAGUE OPTIONS -->
+    <div id="trn-league-options">
+      <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;letter-spacing:2px;margin-bottom:14px;text-transform:uppercase;padding-top:4px;">League Configuration</div>
+      <div class="trn-pools-row">
+        <div class="trn-field-group">
+          <label>Matches Per Team (to qualify)</label>
+          <input type="number" id="trn-league-matches" value="5" min="1" max="20" placeholder="e.g. 5">
+        </div>
+        <div class="trn-field-group">
+          <label>Minimum Points to Qualify</label>
+          <input type="number" id="trn-league-points" value="6" min="0" max="50" placeholder="e.g. 6">
+        </div>
+        <div class="trn-field-group">
+          <label>Top N Teams That Qualify</label>
+          <input type="number" id="trn-league-qualify" value="4" min="2" max="8" placeholder="e.g. 4">
+        </div>
+      </div>
+    </div>
+
+    <!-- POINTS SYSTEM -->
+    <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;letter-spacing:2px;margin-bottom:14px;text-transform:uppercase;">Points System</div>
+    <div class="trn-pools-row" style="margin-bottom:2rem;">
+      <div class="trn-field-group">
+        <label>Win Points</label>
+        <input type="number" id="trn-win-pts" value="2" min="1" max="10" placeholder="2">
+      </div>
+      <div class="trn-field-group">
+        <label>Draw / Tie Points</label>
+        <input type="number" id="trn-draw-pts" value="1" min="0" max="5" placeholder="1">
+      </div>
+      <div class="trn-field-group">
+        <label>Loss Points</label>
+        <input type="number" id="trn-loss-pts" value="0" min="0" max="3" placeholder="0">
+      </div>
+    </div>
+
+    <button class="btn-trn-generate" onclick="generateTournament()">🏆 GENERATE FULL SCHEDULE</button>
+    <p class="trn-err" id="trn-setup-err"></p>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+      <button onclick="closeTrnSetup()" style="background:var(--dark3);border:1.5px solid var(--border);color:var(--muted);padding:10px 24px;border-radius:10px;font-family:'Space Mono',monospace;font-size:12px;cursor:pointer;letter-spacing:1px;transition:all 0.2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">✕ CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOURNAMENT SCREEN -->
+<div id="tournament-screen">
+  <div class="trn-header">
+    <div class="trn-title">🏆 TOURNAMENT</div>
+    <div class="trn-sub" id="trn-format-badge">LEAGUE FORMAT</div>
+  </div>
+  <div class="trn-content">
+    <div class="trn-summary-bar" id="trn-summary-bar"></div>
+    <div class="trn-tabs">
+      <button class="trn-tab-btn active" onclick="switchTrnTab('standings')">📊 STANDINGS</button>
+      <button class="trn-tab-btn" onclick="switchTrnTab('fixtures')">📅 FIXTURES</button>
+      <button class="trn-tab-btn" onclick="switchTrnTab('bracket')">🏅 KNOCKOUT</button>
+    </div>
+    <div class="trn-tab-pane active" id="trn-tab-standings">
+      <div class="trn-pools-wrap" id="trn-standings-wrap"></div>
+    </div>
+    <div class="trn-tab-pane" id="trn-tab-fixtures">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:1.2rem;">
+        <button class="btn-trn-export" onclick="exportSchedule()" style="padding:10px 22px;font-size:15px;">📋 EXPORT TIMETABLE</button>
+      </div>
+      <div id="trn-fixtures-wrap"></div>
+    </div>
+    <div class="trn-tab-pane" id="trn-tab-bracket">
+      <div id="trn-bracket-wrap-inner"></div>
+    </div>
+    <div class="trn-actions">
+      <button class="btn-trn-back" onclick="backToDone()">← BACK TO RESULTS</button>
+      <button class="btn-trn-export" onclick="exportSchedule()">📋 EXPORT SCHEDULE</button>
+      <button class="btn-trn-back" onclick="openTournamentSetup()" style="color:#5AABFF;border-color:rgba(26,107,181,0.4);">⚙ RECONFIGURE</button>
+    </div>
   </div>
 </div>
 
@@ -1109,6 +1718,7 @@ const SAMPLE_PLAYERS=[
 const DEFAULT_TEAMS=["Mumbai Indians","Chennai Super Kings","Royal Challengers","Kolkata Knight Riders","Delhi Capitals","Rajasthan Royals","Sunrisers","Punjab Kings"];
 
 const playerImages={};  // setup-time DOM index -> base64
+const teamImages={};    // setup-time team DOM index -> base64
 let importedPlayers=[];
 let totalPlayerRows=0, totalTeamRows=0;
 
@@ -1141,6 +1751,10 @@ function makeTeamRow(i,val) {
   return `<div class="team-input-row" id="team-row-${i}">
     <span class="team-num">${i+1}.</span>
     <input style="flex:1;background:var(--dark3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:13px;outline:none;" id="team-${i}" value="${val||''}" placeholder="Team ${i+1} name">
+    <label class="team-img-upload-btn" id="team-img-btn-${i}" title="Add team poster / banner image">
+      <span id="team-img-ph-${i}" style="font-size:14px;pointer-events:none;">🖼</span>
+      <input type="file" accept="image/*" onchange="handleTeamImageUpload(event,${i})">
+    </label>
     <button class="btn-remove-row" onclick="removeTeamRow(${i})" title="Remove">×</button>
   </div>`;
 }
@@ -1198,6 +1812,20 @@ function handleImageUpload(event,idx){
   reader.readAsDataURL(file);
 }
 
+function handleTeamImageUpload(event,idx){
+  const file=event.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const d=e.target.result; teamImages[idx]=d;
+    const btn=document.getElementById(`team-img-btn-${idx}`);
+    const ph=document.getElementById(`team-img-ph-${idx}`);
+    if(btn) btn.classList.add('has-image');
+    if(ph) ph.innerHTML=`<img src="${d}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;pointer-events:none;">`;
+    showToast(`🖼 Poster added for Team ${idx+1}`);
+  };
+  reader.readAsDataURL(file);
+}
+
 function fillSamplePlayers(){
   const def=parseInt(document.getElementById('base-price-default')?.value||200);
   for(let i=0;i<totalPlayerRows;i++){
@@ -1219,7 +1847,7 @@ function startAuction(){
   for(let i=0;i<totalTeamRows;i++){
     const el=document.getElementById(`team-${i}`); if(!el) continue;
     const name=el.value?.trim(); if(!name){err.textContent=`Team ${i+1} name required`;return;}
-    teams.push({id:teams.length,name,wallet,spent:0,players:[]});
+    teams.push({id:teams.length,name,wallet,spent:0,players:[],posterImage:teamImages[i]||null});
   }
   if(teams.length<2){err.textContent='At least 2 teams required';return;}
 
@@ -1695,8 +2323,11 @@ function renderTeamsTab(){
     const pct=state.maxPlayers>0?Math.round((t.players.length/state.maxPlayers)*100):Math.round((t.spent/state.wallet)*100);
     const atCap=state.maxPlayers>0&&t.players.length>=state.maxPlayers;
     const capLabel=state.maxPlayers>0?`${t.players.length}/${state.maxPlayers} players`:`${t.players.length} players`;
+    const posterStyle=t.posterImage?`background-image:url('${t.posterImage}');`:'';
+    const posterVisible=t.posterImage?' visible':'';
     c.innerHTML+=`
       <div class="team-card">
+        <div class="team-card-poster${posterVisible}" style="${posterStyle}"></div>
         <div class="team-card-header">
           <div class="team-card-name">${t.name}${atCap?` <span class="maxcap-badge">MAX</span>`:''}</div>
           <div class="team-wallet">₹${t.wallet.toLocaleString()}</div>
@@ -1762,7 +2393,9 @@ function renderDoneScreen(){
         :`<div class="done-player-thumb">${p.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>`;
       return `<div class="done-player-row"><div class="done-player-left">${thumb}<div><div>${p.name}</div><div class="done-player-role">${ROLE_LABELS[p.role]}</div></div></div><div class="done-player-price">₹${p.price.toLocaleString()}</div></div>`;
     }).join('');
-    grid.innerHTML+=`<div class="done-team-card"><div class="done-team-name">${t.name}</div><div class="done-team-spent">${t.players.length} players${capLine} · Remaining ₹${t.wallet.toLocaleString()}</div>${rows||'<div style="color:var(--muted);font-size:13px;">No players</div>'}</div>`;
+    const dPosterStyle=t.posterImage?`background-image:url('${t.posterImage}');`:'';
+    const dPosterVis=t.posterImage?' visible':'';
+    grid.innerHTML+=`<div class="done-team-card"><div class="done-team-poster${dPosterVis}" style="${dPosterStyle}"></div><div class="done-team-name">${t.name}</div><div class="done-team-spent">${t.players.length} players${capLine} · Remaining ₹${t.wallet.toLocaleString()}</div>${rows||'<div style="color:var(--muted);font-size:13px;padding:8px 18px 16px;">No players</div>'}</div>`;
   });
 }
 
@@ -1896,6 +2529,620 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.querySelectorAll('.remove-sale-item').forEach(el=>el.style.opacity='1');
   });
 });
+
+// ═══════════════════════════════════════════════════════
+// TOURNAMENT MODULE
+// ═══════════════════════════════════════════════════════
+let trn = null; // tournament state
+
+// ── Format selection ──
+let selectedFormat = 'league';
+function selectFormat(f) {
+  selectedFormat = f;
+  document.getElementById('fmt-league').classList.toggle('selected', f === 'league');
+  document.getElementById('fmt-pool').classList.toggle('selected', f === 'pool');
+  document.getElementById('trn-pool-options').style.display = f === 'pool' ? 'block' : 'none';
+  document.getElementById('trn-league-options').style.display = f === 'league' ? 'block' : 'none';
+  if (f === 'pool') renderPoolAssign();
+}
+
+function renderPoolAssign() {
+  const numPools = parseInt(document.getElementById('trn-num-pools').value) || 2;
+  const teams = state.teams;
+  const wrap = document.getElementById('trn-pool-teams-wrap');
+  wrap.innerHTML = '';
+  teams.forEach((t, i) => {
+    const opts = Array.from({length: numPools}, (_, k) =>
+      `<option value="${k}" ${(i % numPools) === k ? 'selected' : ''}>Pool ${String.fromCharCode(65+k)}</option>`
+    ).join('');
+    wrap.innerHTML += `<div class="trn-pool-tag"><span>${t.name}</span><select id="pool-assign-${i}">${opts}</select></div>`;
+  });
+}
+
+function openTournamentSetup() {
+  document.getElementById('trn-setup-err').textContent = '';
+  selectFormat('league');
+  renderPoolAssign();
+  document.getElementById('trn-setup-modal').classList.add('show');
+}
+
+function closeTrnSetup() {
+  document.getElementById('trn-setup-modal').classList.remove('show');
+}
+
+// ── Generate round-robin fixtures for a list of team IDs ──
+function generateRoundRobin(teamIds) {
+  const matches = [];
+  const teams = [...teamIds];
+  if (teams.length % 2 !== 0) teams.push(-1); // bye
+  const n = teams.length;
+  const rounds = n - 1;
+  for (let r = 0; r < rounds; r++) {
+    for (let i = 0; i < n / 2; i++) {
+      const a = teams[i], b = teams[n - 1 - i];
+      if (a !== -1 && b !== -1) matches.push({ a, b, round: r, result: null });
+    }
+    // Rotate: fix first element, rotate rest
+    teams.splice(1, 0, teams.pop());
+  }
+  return matches;
+}
+
+function generateTournament() {
+  const err = document.getElementById('trn-setup-err');
+  err.textContent = '';
+  const teams = state.teams;
+  if (teams.length < 2) { err.textContent = 'Need at least 2 teams'; return; }
+
+  const winPts  = parseInt(document.getElementById('trn-win-pts').value)  || 2;
+  const drawPts = parseInt(document.getElementById('trn-draw-pts').value) || 1;
+  const lossPts = parseInt(document.getElementById('trn-loss-pts').value) || 0;
+
+  if (selectedFormat === 'league') {
+    const matchesPerTeam = parseInt(document.getElementById('trn-league-matches').value) || teams.length - 1;
+    const qualifyPts     = parseInt(document.getElementById('trn-league-points').value)  || 6;
+    const qualifyTop     = parseInt(document.getElementById('trn-league-qualify').value) || 4;
+
+    // Generate full round-robin; cap rounds if matchesPerTeam < teams-1
+    let allMatches = generateRoundRobin(teams.map((_, i) => i));
+    // Filter to only matchesPerTeam rounds per team
+    const maxRounds = matchesPerTeam;
+    allMatches = allMatches.filter(m => m.round < maxRounds);
+
+    trn = {
+      format: 'league',
+      pools: [{ name: 'LEAGUE TABLE', teams: teams.map((_, i) => i), matches: allMatches }],
+      knockout: null,
+      winPts, drawPts, lossPts, qualifyPts, qualifyTop,
+      matchCounter: 0
+    };
+    // Assign global match IDs
+    trn.pools[0].matches.forEach((m, i) => m.id = i);
+    trn.matchCounter = allMatches.length;
+
+    document.getElementById('trn-format-badge').textContent =
+      `LEAGUE FORMAT · TOP ${qualifyTop} QUALIFY AT ${qualifyPts} PTS`;
+
+  } else {
+    // Pool format
+    const numPools       = parseInt(document.getElementById('trn-num-pools').value) || 2;
+    const qualifyPerPool = parseInt(document.getElementById('trn-qualify-per-pool').value) || 2;
+    const qualifyPts     = parseInt(document.getElementById('trn-qualify-points').value) || 4;
+
+    // Build pool assignment from UI
+    const poolMap = {}; // poolIndex -> [teamIdx]
+    for (let i = 0; i < numPools; i++) poolMap[i] = [];
+    teams.forEach((_, ti) => {
+      const sel = document.getElementById(`pool-assign-${ti}`);
+      const p = sel ? parseInt(sel.value) : (ti % numPools);
+      poolMap[p].push(ti);
+    });
+
+    let globalId = 0;
+    const pools = Array.from({length: numPools}, (_, pi) => {
+      const teamIds = poolMap[pi] || [];
+      if (teamIds.length < 2) return null;
+      const matches = generateRoundRobin(teamIds);
+      matches.forEach(m => { m.id = globalId++; });
+      return { name: `POOL ${String.fromCharCode(65+pi)}`, teams: teamIds, matches };
+    }).filter(Boolean);
+
+    if (pools.length < 2) { err.textContent = 'Each pool needs at least 2 teams'; return; }
+
+    trn = {
+      format: 'pool',
+      pools,
+      knockout: null,
+      winPts, drawPts, lossPts, qualifyPts, qualifyPerPool,
+      matchCounter: globalId
+    };
+
+    document.getElementById('trn-format-badge').textContent =
+      `${numPools} POOLS · TOP ${qualifyPerPool} PER POOL QUALIFY AT ${qualifyPts} PTS`;
+  }
+
+  closeTrnSetup();
+  document.getElementById('done-screen').style.display = 'none';
+  document.getElementById('tournament-screen').style.display = 'block';
+  renderTrnSummary();
+  renderTrnStandings();
+  renderTrnFixtures();
+  renderTrnBracket();
+}
+
+// ── Points table computation ──
+function computeStandings(pool) {
+  const tableMap = {};
+  pool.teams.forEach(ti => {
+    tableMap[ti] = { ti, played:0, won:0, lost:0, drawn:0, pts:0, nrr:0 };
+  });
+  pool.matches.forEach(m => {
+    if (!m.result) return;
+    const { winner, loser, isDraw } = m.result;
+    tableMap[m.a].played++;
+    tableMap[m.b].played++;
+    if (isDraw) {
+      tableMap[m.a].drawn++; tableMap[m.a].pts += trn.drawPts;
+      tableMap[m.b].drawn++; tableMap[m.b].pts += trn.drawPts;
+    } else {
+      const w = winner, l = loser;
+      tableMap[w].won++;  tableMap[w].pts += trn.winPts;
+      tableMap[l].lost++; tableMap[l].pts += trn.lossPts;
+    }
+    if (m.result.runsA !== undefined) {
+      // NRR approximation
+      tableMap[m.a].nrr += (m.result.runsA || 0) - (m.result.runsB || 0);
+      tableMap[m.b].nrr += (m.result.runsB || 0) - (m.result.runsA || 0);
+    }
+  });
+  return Object.values(tableMap).sort((a,b) => b.pts - a.pts || b.nrr - a.nrr);
+}
+
+function renderTrnSummary() {
+  const totalMatches = trn.pools.reduce((s, p) => s + p.matches.length, 0) +
+    (trn.knockout ? trn.knockout.reduce((s, r) => s + r.length, 0) : 0);
+  const played = trn.pools.reduce((s, p) => s + p.matches.filter(m => m.result).length, 0);
+  document.getElementById('trn-summary-bar').innerHTML = `
+    <div class="trn-stat"><div class="trn-stat-val">${state.teams.length}</div><div class="trn-stat-lbl">TEAMS</div></div>
+    <div class="trn-stat"><div class="trn-stat-val">${totalMatches}</div><div class="trn-stat-lbl">TOTAL MATCHES</div></div>
+    <div class="trn-stat"><div class="trn-stat-val">${played}</div><div class="trn-stat-lbl">PLAYED</div></div>
+    <div class="trn-stat"><div class="trn-stat-val">${totalMatches - played}</div><div class="trn-stat-lbl">REMAINING</div></div>
+    <div class="trn-stat"><div class="trn-stat-val">${trn.winPts}/${trn.drawPts}/${trn.lossPts}</div><div class="trn-stat-lbl">W/D/L PTS</div></div>
+  `;
+}
+
+function renderTrnStandings() {
+  const wrap = document.getElementById('trn-standings-wrap');
+  wrap.innerHTML = '';
+  const qualifyCount = trn.format === 'pool' ? (trn.qualifyPerPool || 2) : (trn.qualifyTop || 4);
+  const qualifyPts   = trn.qualifyPts || 0;
+
+  trn.pools.forEach(pool => {
+    const standings = computeStandings(pool);
+    const rows = standings.map((row, rank) => {
+      const t = state.teams[row.ti];
+      const isQual = (rank < qualifyCount) && (row.pts >= qualifyPts || pool.matches.some(m => m.result)); // show badge after any result
+      const qualBadge = isQual ? `<span class="trn-qual-badge">Q</span>` : '';
+      return `<tr>
+        <td><span style="font-family:'Space Mono',monospace;font-size:10px;color:#555;margin-right:6px;">${rank+1}</span>${t.name}${qualBadge}</td>
+        <td>${row.played}</td><td>${row.won}</td><td>${row.drawn}</td><td>${row.lost}</td>
+        <td style="color:var(--gold);font-weight:700;">${row.pts}</td>
+        <td style="color:#888;">${row.nrr > 0 ? '+' : ''}${row.nrr}</td>
+      </tr>`;
+    }).join('');
+
+    wrap.innerHTML += `<div class="trn-pool-card">
+      <div class="trn-pool-header">${pool.name}</div>
+      <table class="trn-standings-table">
+        <thead><tr><th>TEAM</th><th>P</th><th>W</th><th>D</th><th>L</th><th>PTS</th><th>NRR</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  });
+}
+
+function renderTrnFixtures() {
+  const wrap = document.getElementById('trn-fixtures-wrap');
+  wrap.innerHTML = '';
+
+  trn.pools.forEach(pool => {
+    const roundMap = {};
+    pool.matches.forEach(m => {
+      if (!roundMap[m.round]) roundMap[m.round] = [];
+      roundMap[m.round].push(m);
+    });
+
+    let poolHTML = `<div class="trn-section-title">${pool.name} — FIXTURES</div>`;
+    poolHTML += `<div class="trn-rounds-wrap">`;
+
+    Object.keys(roundMap).sort((a,b)=>a-b).forEach(round => {
+      poolHTML += `<div><div class="trn-round-label">Round ${parseInt(round)+1}</div><div class="trn-matches-grid">`;
+      roundMap[round].forEach(m => {
+        const ta = state.teams[m.a], tb = state.teams[m.b];
+
+        const bottomContent = m.result
+          ? `<div class="trn-result-display">
+              ${m.result.isDraw
+                ? `🤝 DRAW — Both teams gain ${trn.drawPts} point${trn.drawPts !== 1 ? 's' : ''}`
+                : `🏆 ${state.teams[m.result.winner].name} WON · +${trn.winPts} pts`
+              }
+              ${m.result.runsA !== undefined
+                ? `<div style="margin-top:5px;font-size:11px;color:var(--muted);">${ta.name}: <strong style="color:var(--text);">${m.result.runsA}</strong> &nbsp;|&nbsp; ${tb.name}: <strong style="color:var(--text);">${m.result.runsB}</strong></div>`
+                : ''}
+             </div>`
+          : `<div class="trn-score-form">
+              <input class="trn-score-inp" type="number" id="runs-a-${m.id}" placeholder="Score">
+              <span class="trn-score-sep">vs</span>
+              <input class="trn-score-inp" type="number" id="runs-b-${m.id}" placeholder="Score">
+              <button class="btn-trn-result" onclick="enterResult(${m.id},${m.a},${m.b})">✓ RESULT</button>
+              <button class="btn-trn-draw" onclick="enterDraw(${m.id},${m.a},${m.b})">DRAW</button>
+             </div>`;
+
+        poolHTML += `<div class="trn-match-card" id="match-card-${m.id}">
+          <div class="trn-match-num">MATCH ${m.id+1} · ${pool.name}</div>
+          <div class="trn-match-top">
+            <div class="trn-match-team-a">
+              <div class="trn-match-team-name">${ta.name}</div>
+              <div class="trn-match-pool-badge">${pool.name}</div>
+            </div>
+            <div class="trn-vs">VS</div>
+            <div class="trn-match-team-b">
+              <div class="trn-match-team-name">${tb.name}</div>
+              <div class="trn-match-pool-badge">${pool.name}</div>
+            </div>
+          </div>
+          <div class="trn-match-bottom">${bottomContent}</div>
+        </div>`;
+      });
+      poolHTML += `</div></div>`;
+    });
+
+    poolHTML += `</div>`;
+    wrap.innerHTML += poolHTML;
+  });
+
+  // Knockout matches
+  if (trn.knockout && trn.knockout.length) {
+    let koHTML = `<div class="trn-section-title">KNOCKOUT STAGE</div><div class="trn-rounds-wrap">`;
+    const totalRounds = trn.knockout.length;
+    trn.knockout.forEach((round, ri) => {
+      const label = getKnockoutRoundLabel(totalRounds, ri);
+      koHTML += `<div><div class="trn-round-label">${label}</div><div class="trn-matches-grid">`;
+      round.forEach(m => {
+        const ta = m.a >= 0 ? state.teams[m.a] : null;
+        const tb = m.b >= 0 ? state.teams[m.b] : null;
+        const tbn  = ta ? ta.name : 'TBD — Qualifier';
+        const tbn2 = tb ? tb.name : 'TBD — Qualifier';
+
+        const bottomContent = m.result
+          ? `<div class="trn-result-display">🏆 ${state.teams[m.result.winner].name} WON · Advances</div>`
+          : ta && tb
+          ? `<div class="trn-score-form">
+              <input class="trn-score-inp" type="number" id="runs-a-${m.id}" placeholder="Score">
+              <span class="trn-score-sep">vs</span>
+              <input class="trn-score-inp" type="number" id="runs-b-${m.id}" placeholder="Score">
+              <button class="btn-trn-result" onclick="enterResult(${m.id},${m.a},${m.b})">✓ RESULT</button>
+             </div>`
+          : `<div style="text-align:center;font-family:'Space Mono',monospace;font-size:12px;color:#444;padding:6px 0;">⏳ Waiting for pool stage to complete…</div>`;
+
+        koHTML += `<div class="trn-match-card" id="match-card-${m.id}">
+          <div class="trn-match-num">KNOCKOUT · ${label}</div>
+          <div class="trn-match-top">
+            <div class="trn-match-team-a">
+              <div class="trn-match-team-name" style="${!ta?'color:#444;font-style:italic;':''}">${tbn}</div>
+            </div>
+            <div class="trn-vs">VS</div>
+            <div class="trn-match-team-b">
+              <div class="trn-match-team-name" style="${!tb?'color:#444;font-style:italic;':''}">${tbn2}</div>
+            </div>
+          </div>
+          <div class="trn-match-bottom">${bottomContent}</div>
+        </div>`;
+      });
+      koHTML += `</div></div>`;
+    });
+    koHTML += `</div>`;
+    wrap.innerHTML += koHTML;
+  }
+}
+
+function enterResult(matchId, ai, bi) {
+  const runsAEl = document.getElementById(`runs-a-${matchId}`);
+  const runsBEl = document.getElementById(`runs-b-${matchId}`);
+  const runsA = parseInt(runsAEl?.value);
+  const runsB = parseInt(runsBEl?.value);
+
+  let winner, loser;
+  if (!isNaN(runsA) && !isNaN(runsB)) {
+    winner = runsA >= runsB ? ai : bi;
+    loser  = winner === ai ? bi : ai;
+  } else {
+    // No score — just pick by who's team A
+    winner = ai; loser = bi;
+  }
+
+  setMatchResult(matchId, { winner, loser, isDraw: false, runsA: isNaN(runsA) ? undefined : runsA, runsB: isNaN(runsB) ? undefined : runsB });
+}
+
+function enterDraw(matchId, ai, bi) {
+  setMatchResult(matchId, { winner: null, loser: null, isDraw: true });
+}
+
+function findMatch(matchId) {
+  for (const pool of trn.pools) {
+    const m = pool.matches.find(x => x.id === matchId);
+    if (m) return m;
+  }
+  if (trn.knockout) {
+    for (const round of trn.knockout) {
+      const m = round.find(x => x.id === matchId);
+      if (m) return m;
+    }
+  }
+  return null;
+}
+
+function setMatchResult(matchId, result) {
+  const m = findMatch(matchId);
+  if (!m) return;
+  m.result = result;
+  checkAndBuildKnockout();
+  renderTrnSummary();
+  renderTrnStandings();
+  renderTrnFixtures();
+  renderTrnBracket();
+  showToast(result.isDraw ? '🤝 Draw recorded!' : `🏆 ${state.teams[result.winner].name} wins!`);
+}
+
+function checkAndBuildKnockout() {
+  // Check if all pool/league matches are done
+  const allDone = trn.pools.every(p => p.matches.every(m => m.result));
+  if (!allDone) {
+    // Still propagate winners for already-completed knockout rounds
+    if (trn.knockout && trn.knockout.length > 0) propagateKnockoutWinners();
+    return;
+  }
+
+  // Gather qualifiers from each pool/league
+  let qualifiers = [];
+
+  if (trn.format === 'league') {
+    const qualifyTop = trn.qualifyTop || 4;
+    const standings = computeStandings(trn.pools[0]);
+    // Take top N teams, regardless of points threshold (they already played all matches)
+    qualifiers = standings.slice(0, qualifyTop).map(r => r.ti);
+  } else {
+    // Pool format: top N from each pool
+    const qualifyCount = trn.qualifyPerPool || 2;
+    trn.pools.forEach(pool => {
+      const standings = computeStandings(pool);
+      standings.slice(0, qualifyCount).forEach(row => qualifiers.push(row.ti));
+    });
+  }
+
+  // Build or update knockout bracket
+  if (!trn.knockout || trn.knockout.length === 0) {
+    trn.knockout = buildKnockoutRounds(qualifiers);
+  } else {
+    propagateKnockoutWinners();
+  }
+}
+
+function buildKnockoutRounds(qualTeamIds) {
+  const rounds = [];
+  let participants = [...qualTeamIds];
+
+  // Pad to next power of 2
+  let size = 1;
+  while (size < participants.length) size *= 2;
+  while (participants.length < size) participants.push(-1);
+
+  while (participants.length > 1) {
+    const round = [];
+    for (let i = 0; i < participants.length; i += 2) {
+      const m = { id: trn.matchCounter++, a: participants[i], b: participants[i+1], round: rounds.length, result: null };
+      round.push(m);
+    }
+    rounds.push(round);
+    participants = round.map(() => -1); // TBD for next round
+  }
+  return rounds;
+}
+
+// Dynamically compute round label based on total rounds and current round index
+function getKnockoutRoundLabel(totalRounds, roundIndex) {
+  const fromEnd = totalRounds - 1 - roundIndex; // 0 = Final, 1 = Semi, 2 = Quarter, etc.
+  if (fromEnd === 0) return 'FINAL';
+  if (fromEnd === 1) return 'SEMI-FINALS';
+  if (fromEnd === 2) return 'QUARTER-FINALS';
+  if (fromEnd === 3) return 'ROUND OF 16';
+  return `ROUND ${roundIndex + 1}`;
+}
+
+function propagateKnockoutWinners() {
+  if (!trn.knockout) return;
+  for (let ri = 0; ri < trn.knockout.length - 1; ri++) {
+    const round = trn.knockout[ri];
+    const nextRound = trn.knockout[ri + 1];
+    round.forEach((m, mi) => {
+      if (!m.result) return;
+      const winner = m.result.isDraw ? m.a : m.result.winner; // tie = team A advances
+      const nextMatchIdx = Math.floor(mi / 2);
+      const isA = mi % 2 === 0;
+      if (nextRound[nextMatchIdx]) {
+        if (isA) nextRound[nextMatchIdx].a = winner;
+        else     nextRound[nextMatchIdx].b = winner;
+      }
+    });
+  }
+}
+
+function renderTrnBracket() {
+  const wrap = document.getElementById('trn-bracket-wrap-inner');
+  if (!trn.knockout || trn.knockout.length === 0) {
+    wrap.innerHTML = `<div style="color:var(--muted);font-family:'Space Mono',monospace;font-size:12px;padding:2rem;text-align:center;">Complete all pool/league matches to unlock the knockout bracket.</div>`;
+    return;
+  }
+
+  const totalRounds = trn.knockout.length;
+  let html = `<div class="trn-bracket-wrap"><div class="trn-bracket">`;
+
+  trn.knockout.forEach((round, ri) => {
+    const label = getKnockoutRoundLabel(totalRounds, ri);
+    html += `<div class="trn-bracket-round"><div class="trn-bracket-round-title">${label}</div>`;
+    round.forEach(m => {
+      const ta = m.a >= 0 ? state.teams[m.a]?.name : 'TBD';
+      const tb = m.b >= 0 ? state.teams[m.b]?.name : 'TBD';
+      const aWin = m.result && !m.result.isDraw && m.result.winner === m.a;
+      const bWin = m.result && !m.result.isDraw && m.result.winner === m.b;
+      html += `<div class="trn-bracket-match">
+        <div class="trn-bracket-match-team${aWin?' winner':''}${m.a<0?' tbd':''}">${ta} ${aWin?'🏆':''}</div>
+        <div class="trn-bracket-divider"></div>
+        <div class="trn-bracket-match-team${bWin?' winner':''}${m.b<0?' tbd':''}">${tb} ${bWin?'🏆':''}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  // Champion display
+  const finalRound = trn.knockout[trn.knockout.length - 1];
+  const finalMatch = finalRound?.[0];
+  if (finalMatch?.result && !finalMatch.result.isDraw) {
+    const champ = state.teams[finalMatch.result.winner];
+    html += `<div class="trn-bracket-round" style="justify-content:center;margin-top:32px;">
+      <div class="trn-bracket-round-title" style="color:var(--gold);">🏆 CHAMPION</div>
+      <div class="trn-bracket-match" style="border-color:rgba(212,160,23,0.6);background:rgba(212,160,23,0.08);text-align:center;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold);letter-spacing:2px;">${champ.name}</div>
+      </div>
+    </div>`;
+  }
+
+  html += `</div></div>`;
+  wrap.innerHTML = html;
+}
+
+function switchTrnTab(tab) {
+  ['standings','fixtures','bracket'].forEach(t => {
+    document.getElementById(`trn-tab-${t}`).classList.toggle('active', t === tab);
+  });
+  document.querySelectorAll('.trn-tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', ['standings','fixtures','bracket'][i] === tab);
+  });
+}
+
+function backToDone() {
+  document.getElementById('tournament-screen').style.display = 'none';
+  document.getElementById('done-screen').style.display = 'flex';
+}
+
+function exportSchedule() {
+  const line = (char, len) => char.repeat(len);
+  const pad = (str, len) => String(str).padEnd(len);
+  const center = (str, len) => {
+    const s = String(str); const p = Math.max(0, len - s.length);
+    return ' '.repeat(Math.floor(p/2)) + s + ' '.repeat(Math.ceil(p/2));
+  };
+
+  let txt = '';
+  txt += line('═', 60) + '\n';
+  txt += center('🏆 TOURNAMENT TIMETABLE', 60) + '\n';
+  txt += line('═', 60) + '\n\n';
+  txt += `Format  : ${trn.format === 'pool' ? `${trn.pools.length} POOLS` : 'LEAGUE'}\n`;
+  txt += `Points  : Win = ${trn.winPts}  |  Draw = ${trn.drawPts}  |  Loss = ${trn.lossPts}\n`;
+  txt += `Teams   : ${state.teams.length}\n`;
+
+  const totalPoolMatches = trn.pools.reduce((s, p) => s + p.matches.length, 0);
+  const totalKOMatches   = trn.knockout ? trn.knockout.reduce((s, r) => s + r.length, 0) : 0;
+  txt += `Matches : ${totalPoolMatches} group + ${totalKOMatches} knockout = ${totalPoolMatches + totalKOMatches} total\n`;
+  txt += '\n';
+
+  // ── Pool / League Fixtures ──
+  let globalMatchNum = 1;
+  trn.pools.forEach(pool => {
+    txt += line('─', 60) + '\n';
+    txt += center(pool.name + ' — FIXTURES', 60) + '\n';
+    txt += line('─', 60) + '\n\n';
+
+    const roundMap = {};
+    pool.matches.forEach(m => {
+      if (!roundMap[m.round]) roundMap[m.round] = [];
+      roundMap[m.round].push(m);
+    });
+
+    Object.keys(roundMap).sort((a,b) => a-b).forEach(round => {
+      txt += `  ◉ Round ${parseInt(round)+1}\n`;
+      roundMap[round].forEach(m => {
+        const ta = state.teams[m.a].name;
+        const tb = state.teams[m.b].name;
+        const result = m.result
+          ? (m.result.isDraw
+              ? `DRAW`
+              : `${state.teams[m.result.winner].name} WON${m.result.runsA !== undefined ? ` (${m.result.runsA} - ${m.result.runsB})` : ''}`)
+          : 'PENDING';
+        txt += `    M${String(globalMatchNum).padStart(2,'0')}  ${pad(ta,20)} vs  ${pad(tb,20)} → ${result}\n`;
+        globalMatchNum++;
+      });
+      txt += '\n';
+    });
+
+    // Standings for this pool
+    const standings = computeStandings(pool);
+    txt += `  STANDINGS:\n`;
+    txt += `  ${pad('Pos',4)}${pad('Team',22)}${pad('P',4)}${pad('W',4)}${pad('D',4)}${pad('L',4)}${pad('Pts',5)}  NRR\n`;
+    txt += `  ${line('-', 54)}\n`;
+    standings.forEach((row, i) => {
+      const t = state.teams[row.ti];
+      const qualMark = i < (trn.qualifyPerPool || trn.qualifyTop || 4) ? '✓' : ' ';
+      txt += `  ${pad(qualMark+(i+1),4)}${pad(t.name,22)}${pad(row.played,4)}${pad(row.won,4)}${pad(row.drawn,4)}${pad(row.lost,4)}${pad(row.pts,5)}  ${row.nrr >= 0 ? '+' : ''}${row.nrr}\n`;
+    });
+    txt += '\n';
+  });
+
+  // ── Knockout Stage ──
+  if (trn.knockout && trn.knockout.length > 0) {
+    txt += line('═', 60) + '\n';
+    txt += center('KNOCKOUT STAGE', 60) + '\n';
+    txt += line('═', 60) + '\n\n';
+    const totalRounds = trn.knockout.length;
+    trn.knockout.forEach((round, ri) => {
+      const label = getKnockoutRoundLabel(totalRounds, ri);
+      txt += `  ◉ ${label}\n`;
+      round.forEach(m => {
+        const ta = m.a >= 0 ? state.teams[m.a].name : 'TBD';
+        const tb = m.b >= 0 ? state.teams[m.b].name : 'TBD';
+        const result = m.result
+          ? (m.result.isDraw
+              ? 'DRAW (Team A advances)'
+              : `${state.teams[m.result.winner].name} WON${m.result.runsA !== undefined ? ` (${m.result.runsA} - ${m.result.runsB})` : ''}`)
+          : 'PENDING';
+        txt += `    M${String(globalMatchNum).padStart(2,'0')}  ${pad(ta,20)} vs  ${pad(tb,20)} → ${result}\n`;
+        globalMatchNum++;
+      });
+      txt += '\n';
+    });
+
+    // Champion
+    const finalRound = trn.knockout[trn.knockout.length - 1];
+    const finalMatch = finalRound?.[0];
+    if (finalMatch?.result && !finalMatch.result.isDraw) {
+      const champ = state.teams[finalMatch.result.winner];
+      txt += line('★', 60) + '\n';
+      txt += center(`🏆 CHAMPION: ${champ.name}`, 60) + '\n';
+      txt += line('★', 60) + '\n';
+    }
+  }
+
+  txt += '\n' + line('═', 60) + '\n';
+  txt += `  ✓ = Qualifies to knockout stage\n`;
+  txt += `  Generated by CricBid Tournament System\n`;
+  txt += line('═', 60) + '\n';
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([txt], {type:'text/plain;charset=utf-8'}));
+  a.download = 'tournament_timetable.txt';
+  a.click();
+  showToast('📋 Timetable exported!');
+}
 
 // ── INIT ──
 buildSetup();
