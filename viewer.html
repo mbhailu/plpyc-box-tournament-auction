@@ -78,6 +78,20 @@
   .bid-price{font-family:'Space Mono',monospace;color:var(--gold);}
   .no-bids{color:var(--muted);font-family:'Space Mono',monospace;font-size:12px;padding:1rem 0;text-align:center;}
 
+  .live-bid-banner{
+    display:none; margin-bottom:1rem; padding:14px 18px; border-radius:14px;
+    background:linear-gradient(135deg,rgba(26,107,58,0.2),rgba(212,160,23,0.12));
+    border:1px solid rgba(46,158,87,0.45); text-align:center;
+    animation:liveFlash 0.6s ease;
+  }
+  .live-bid-banner.show{display:block;}
+  .live-bid-banner.flash{animation:liveFlash 0.6s ease;}
+  @keyframes liveFlash{0%{box-shadow:0 0 0 0 rgba(46,158,87,0.5)}100%{box-shadow:0 0 0 12px rgba(46,158,87,0)}}
+  .live-bid-lbl{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:6px;}
+  .live-bid-amount{font-family:'Space Mono',monospace;font-size:clamp(28px,5vw,40px);color:var(--gold-light);font-weight:700;line-height:1.1;}
+  .live-bid-team{font-size:15px;color:var(--green-light);margin-top:4px;font-weight:600;}
+  .live-bid-player{font-family:'Space Mono',monospace;font-size:11px;color:#aaa;margin-top:6px;}
+
   .section-title{font-size:22px;color:var(--gold);margin:1rem 0 0.75rem;}
   .viewer-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
   .panel{background:var(--dark2);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:1rem;min-height:200px;}
@@ -147,6 +161,13 @@
         <div class="stat-card"><div class="stat-card-val" id="v-stat-teams">—</div><div class="stat-card-lbl">TEAMS</div></div>
       </div>
 
+      <div class="live-bid-banner" id="live-bid-banner">
+        <div class="live-bid-lbl">🔴 LIVE HIGHEST BID</div>
+        <div class="live-bid-amount" id="live-bid-amount">—</div>
+        <div class="live-bid-team" id="live-bid-team"></div>
+        <div class="live-bid-player" id="live-bid-player"></div>
+      </div>
+
       <div class="viewer-main">
         <div class="player-card" id="current-player-card"></div>
         <div class="live-card">
@@ -186,7 +207,13 @@ let db = null;
 let state = null;
 let playerFilter = 'all';
 let refreshTimer = null;
-let lastTimestamp = 0;
+let lastSyncSignature = '';
+
+function getSyncSignature(s){
+  if(!s) return '';
+  const last=s.currentBids?.length?s.currentBids[s.currentBids.length-1]:null;
+  return `${s.currentIndex}|${s.currentBids?.length||0}|${last?.amount||0}|${last?.teamName||''}|${s.timestamp||0}`;
+}
 
 function initDB() {
   return new Promise((res, rej) => {
@@ -218,14 +245,15 @@ function applySavedState(saved){
     queue:saved.queue||[],
     currentIndex:saved.currentIndex||0,
     currentBids:saved.currentBids||[],
-    timestamp:saved.timestamp||0
+    timestamp:saved.timestamp||0,
+    currentPlayer:saved.currentPlayer||null
   };
   return true;
 }
 
 async function loadStateFromCloud(){
   try{
-    const res=await fetch('/api/auction',{cache:'no-store'});
+    const res=await fetch(`/api/auction?t=${Date.now()}`,{cache:'no-store'});
     if(!res.ok) return false;
     const saved=await res.json();
     if(!saved) return false;
@@ -276,8 +304,27 @@ function importJsonBackup(event) {
 }
 
 function getCurrentPlayer() {
+  if(state?.currentPlayer) return state.currentPlayer;
   if (!state || !state.queue.length || state.currentIndex >= state.queue.length) return null;
-  return state.players[state.queue[state.currentIndex]] || null;
+  const p = state.players[state.queue[state.currentIndex]];
+  return p || null;
+}
+
+function renderLiveBidBanner() {
+  const banner = document.getElementById('live-bid-banner');
+  const p = getCurrentPlayer();
+  const lastBid = state?.currentBids?.length ? state.currentBids[state.currentBids.length - 1] : null;
+  const inAuction = state && state.currentIndex < state.queue.length;
+
+  if (!inAuction || !p) {
+    banner.classList.remove('show');
+    return;
+  }
+
+  banner.classList.add('show');
+  document.getElementById('live-bid-amount').textContent = lastBid ? `₹${lastBid.amount.toLocaleString()}` : '—';
+  document.getElementById('live-bid-team').textContent = lastBid ? lastBid.teamName : 'No bids yet';
+  document.getElementById('live-bid-player').textContent = `On block: ${p.name} · Base ₹${p.base.toLocaleString()}`;
 }
 
 function renderViewer() {
@@ -303,6 +350,7 @@ function renderViewer() {
   document.getElementById('v-stat-unsold').textContent = unsold;
   document.getElementById('v-stat-teams').textContent = state.teams.length;
 
+  renderLiveBidBanner();
   renderCurrentPlayer();
   renderBidHistory();
   renderTeams();
@@ -412,11 +460,20 @@ function renderPlayers() {
 }
 
 async function refreshViewer() {
-  const prevTs = state?.timestamp || 0;
+  const prevSignature = lastSyncSignature;
   const fromCloud = await loadStateFromCloud();
   if (!fromCloud && !state) await loadStateFromDb();
-  if (state && state.timestamp !== prevTs) {
-    setStatus('ok', fromCloud ? `Live (cloud) · ${new Date().toLocaleTimeString()}` : `Synced · ${new Date().toLocaleTimeString()}`);
+
+  const sig = getSyncSignature(state);
+  if (sig && sig !== prevSignature) {
+    lastSyncSignature = sig;
+    const banner = document.getElementById('live-bid-banner');
+    if (banner.classList.contains('show')) {
+      banner.classList.remove('flash');
+      void banner.offsetWidth;
+      banner.classList.add('flash');
+    }
+    setStatus('ok', fromCloud ? `Live · ${new Date().toLocaleTimeString()}` : `Synced · ${new Date().toLocaleTimeString()}`);
   } else if (!state) {
     setStatus('ok', 'Waiting for admin to start auction…');
   }

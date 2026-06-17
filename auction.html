@@ -1619,13 +1619,16 @@ function setDbStatus(t,m){ document.getElementById('db-dot').className='db-dot '
 
 function buildCloudPayload(){
   if(!state||!state.teams||!state.teams.length) return null;
+  const pIdx=state.queue[state.currentIndex];
+  const currentPlayer=pIdx!==undefined?state.players[pIdx]:null;
   return {
     id:'main', timestamp:Date.now(),
     teams:state.teams, players:state.players.map(p=>({...p,imageData:undefined})),
     wallet:state.wallet, maxPlayers:state.maxPlayers, globalBasePrice:state.globalBasePrice||0,
     queue:state.queue, currentIndex:state.currentIndex,
     currentBids:state.currentBids, playerFilter:state.playerFilter,
-    activeTab:state.activeTab, isReauction:state.isReauction, bidIncrement:state.bidIncrement||0
+    activeTab:state.activeTab, isReauction:state.isReauction, bidIncrement:state.bidIncrement||0,
+    currentPlayer:currentPlayer?{name:currentPlayer.name,role:currentPlayer.role,base:currentPlayer.base}:null
   };
 }
 
@@ -1639,7 +1642,14 @@ async function syncToCloud(){
 }
 
 function saveStateToDb() {
-  if (!db) { showToast('⚠ DB not ready'); return; }
+  syncToCloud().then(cloud=>{
+    const time=new Date().toLocaleTimeString();
+    if(cloud.ok) setDbStatus('ok',`Live · ${time} · ☁ Viewers updated`);
+    else if(cloud.status===404) setDbStatus('err',`Local only · API 404 — push api/ & redeploy`);
+    else if(cloud.status===503) setDbStatus('err',`Local only · Connect Vercel KV`);
+    else if(!db) setDbStatus('err',`Cloud sync failed · ${time}`);
+  });
+  if (!db) { return; }
   const tx = db.transaction(STORE,'readwrite'), store = tx.objectStore(STORE);
   store.put({ id:'main', timestamp:Date.now(),
     teams:state.teams, players:state.players.map(p=>({...p,imageData:undefined})),
@@ -1654,15 +1664,7 @@ function saveStateToDb() {
       try { db.transaction(STORE,'readwrite').objectStore(STORE).put({id:`img_${p.id}`,imageData:p.imageData}); } catch(e){}
     }
   });
-  tx.oncomplete = async () => {
-    const cloud=await syncToCloud();
-    const time=new Date().toLocaleTimeString();
-    if(cloud.ok) setDbStatus('ok',`Saved · ${time} · ☁ Live for viewers`);
-    else if(cloud.status===404) setDbStatus('err',`Saved locally · API 404 — push api/ folder & redeploy`);
-    else if(cloud.status===503) setDbStatus('err',`Saved locally · Connect Vercel KV in Storage`);
-    else setDbStatus('ok',`Saved locally · ${time}`);
-  };
-  tx.onerror    = () => { setDbStatus('err','Save failed'); showToast('❌ Save failed'); };
+  tx.onerror = () => { setDbStatus('err','Save failed'); showToast('❌ Save failed'); };
 }
 
 async function loadStateFromDb() {
@@ -2091,6 +2093,7 @@ function renderAuction(){
   updateStats();
   renderSidebar();
   updateMaxCapIndicator();
+  saveStateToDb();
 }
 
 function getBidIncrement(){
@@ -2235,6 +2238,7 @@ function removeBid(bidIndex,p){
   renderBidLog();
   document.getElementById('bid-error').textContent='';
   showToast(`↩ Bid by ${removed.teamName} removed`);
+  saveStateToDb();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2334,6 +2338,7 @@ function placeBid(){
 
   rebuildBidDropdown(p);
   renderBidLog();
+  saveStateToDb();
 }
 
 function soldPlayer(){
