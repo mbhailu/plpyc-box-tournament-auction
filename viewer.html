@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CricBid Live — Auction Viewer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold:#D4A017; --gold-light:#F5C842; --gold-dark:#A07810;
+    --green:#1A6B3A; --green-light:#2E9E57;
+    --dark:#0D0D0D; --dark2:#161616; --dark3:#1F1F1F; --dark4:#2A2A2A;
+    --border:rgba(212,160,23,0.25); --text:#F0EAD6; --muted:#888880;
+    --red:#C0392B; --blue:#1A6BB5;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--dark);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+  h1,h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:2px;}
+
+  #viewer-screen{min-height:100vh;padding-bottom:48px;}
+  .viewer-header{
+    display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+    padding:0.8rem 1.2rem;background:var(--dark2);border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:100;
+  }
+  .viewer-logo{font-size:clamp(20px,3vw,28px);color:var(--gold);letter-spacing:2px;}
+  .live-pill{
+    display:inline-flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;font-size:10px;
+    color:var(--green-light);background:rgba(46,158,87,0.12);border:1px solid rgba(46,158,87,0.35);
+    padding:4px 10px;border-radius:20px;letter-spacing:1px;
+  }
+  .live-dot{width:7px;height:7px;border-radius:50%;background:var(--green-light);animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+  .viewer-meta{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);}
+  .viewer-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .btn-ghost{
+    background:var(--dark3);border:1px solid var(--border);color:var(--text);
+    padding:7px 12px;border-radius:8px;font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;
+  }
+  .btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+
+  .viewer-body{padding:1rem 1.2rem 1.5rem;max-width:1400px;margin:0 auto;}
+  .stats-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1rem;}
+  .stat-card{background:var(--dark2);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:14px;text-align:center;}
+  .stat-card-val{font-family:'Space Mono',monospace;font-size:clamp(20px,3vw,28px);color:var(--gold);font-weight:700;}
+  .stat-card-lbl{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:4px;}
+
+  .viewer-main{display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);gap:1rem;margin-bottom:1rem;}
+  .player-card,.live-card{
+    background:var(--dark2);border:1px solid var(--border);border-radius:18px;padding:1.2rem;
+  }
+  .player-card{text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:280px;}
+  .player-card.empty{justify-content:center;color:var(--muted);font-family:'Space Mono',monospace;font-size:12px;}
+  .player-num{font-family:'Space Mono',monospace;font-size:10px;color:#666;letter-spacing:2px;margin-bottom:0.75rem;}
+  .player-avatar{
+    width:90px;height:90px;border-radius:50%;border:3px solid var(--gold);margin:0 auto 0.75rem;
+    background:var(--dark3);display:flex;align-items:center;justify-content:center;overflow:hidden;
+  }
+  .player-avatar img{width:100%;height:100%;object-fit:cover;}
+  .player-avatar span{font-family:'Bebas Neue',sans-serif;font-size:34px;color:var(--gold);}
+  .player-name{font-size:clamp(24px,4vw,34px);line-height:1.1;margin-bottom:0.35rem;}
+  .role-tag{display:inline-block;padding:4px 14px;border-radius:20px;font-family:'Space Mono',monospace;font-size:11px;margin-bottom:0.9rem;}
+  .role-BAT{background:rgba(212,160,23,0.15);color:var(--gold-light);}
+  .role-BWL{background:rgba(46,158,87,0.15);color:var(--green-light);}
+  .role-ALL{background:rgba(26,107,181,0.15);color:#5AABFF;}
+  .role-WK{background:rgba(192,57,43,0.15);color:#E87065;}
+  .price-row{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;width:100%;}
+  .price-box{background:var(--dark3);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:10px;text-align:center;}
+  .price-lbl{font-family:'Space Mono',monospace;font-size:9px;color:#666;letter-spacing:1px;margin-bottom:6px;}
+  .price-val{font-family:'Space Mono',monospace;font-size:18px;color:var(--gold-light);font-weight:700;}
+  .price-team{font-size:11px;color:#aaa;margin-top:4px;line-height:1.25;}
+
+  .live-card-title{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:0.8rem;}
+  .bid-history{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;}
+  .bid-item{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--dark3);border-radius:8px;border:1px solid rgba(255,255,255,0.05);font-size:13px;}
+  .bid-item.latest{border-color:rgba(46,158,87,0.4);background:rgba(26,107,58,0.12);}
+  .bid-price{font-family:'Space Mono',monospace;color:var(--gold);}
+  .no-bids{color:var(--muted);font-family:'Space Mono',monospace;font-size:12px;padding:1rem 0;text-align:center;}
+
+  .section-title{font-size:22px;color:var(--gold);margin:1rem 0 0.75rem;}
+  .viewer-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+  .panel{background:var(--dark2);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:1rem;min-height:200px;}
+  .team-card{background:var(--dark3);border:1px solid rgba(212,160,23,0.18);border-radius:14px;padding:12px;margin-bottom:10px;}
+  .team-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;}
+  .team-name{font-size:15px;font-weight:600;}
+  .team-wallet{font-family:'Space Mono',monospace;font-size:13px;color:var(--gold);}
+  .team-meta{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:8px;}
+  .team-cap-bar{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;margin-bottom:8px;overflow:hidden;}
+  .team-cap-fill{height:100%;background:var(--gold);border-radius:2px;}
+  .team-cap-fill.full{background:var(--red);}
+  .chip-list{display:flex;flex-wrap:wrap;gap:5px;}
+  .chip{font-size:10px;padding:3px 8px;border-radius:5px;background:rgba(212,160,23,0.08);color:#c8b87a;border:1px solid rgba(212,160,23,0.2);font-family:'Space Mono',monospace;}
+
+  .filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+  .filter-btn{padding:5px 12px;border-radius:20px;font-size:11px;cursor:pointer;font-family:'Space Mono',monospace;border:1px solid rgba(255,255,255,0.1);background:var(--dark3);color:#aaa;}
+  .filter-btn.active{background:rgba(212,160,23,0.18);color:var(--gold);border-color:rgba(212,160,23,0.5);}
+  .player-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;margin-bottom:5px;background:var(--dark3);border:1px solid rgba(255,255,255,0.04);}
+  .player-item.sold{border-color:rgba(46,158,87,0.25);}
+  .player-item.unsold{border-color:rgba(192,57,43,0.25);}
+  .pli-name{font-size:13px;font-weight:600;}
+  .pli-meta{font-size:11px;color:var(--muted);}
+  .pli-status{margin-left:auto;text-align:right;font-family:'Space Mono',monospace;font-size:11px;}
+  .pli-status.sold{color:var(--green-light);}
+  .pli-status.unsold{color:#E87065;}
+  .pli-status.available{color:var(--gold);}
+
+  .empty-state{text-align:center;padding:3rem 1rem;color:var(--muted);font-family:'Space Mono',monospace;font-size:13px;line-height:1.8;}
+  .status-bar{
+    position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--dark2);border-top:1px solid var(--border);
+    padding:6px 12px;display:flex;align-items:center;gap:8px;font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);
+  }
+  .status-dot{width:7px;height:7px;border-radius:50%;background:#888;}
+  .status-dot.ok{background:var(--green-light);}
+
+  @media(max-width:900px){
+    .stats-row{grid-template-columns:repeat(2,1fr);}
+    .viewer-main{grid-template-columns:1fr;}
+    .viewer-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div id="viewer-screen">
+  <div class="viewer-header">
+    <div>
+      <div class="viewer-logo">🏏 CRICBID LIVE</div>
+      <span class="live-pill"><span class="live-dot"></span> LIVE</span>
+    </div>
+    <div class="viewer-meta" id="viewer-updated">Loading…</div>
+    <div class="viewer-actions">
+      <button class="btn-ghost" onclick="copyViewerLink()">🔗 COPY LINK</button>
+      <button class="btn-ghost" onclick="refreshViewer()">↻ REFRESH</button>
+      <button class="btn-ghost" onclick="document.getElementById('json-import-input').click()">⬆ LOAD BACKUP</button>
+      <input type="file" id="json-import-input" accept=".json" style="display:none" onchange="importJsonBackup(event)">
+    </div>
+  </div>
+
+  <div class="viewer-body" id="viewer-body">
+    <div class="empty-state" id="viewer-empty">No auction data yet.<br>Waiting for the admin to start the auction on Vercel…</div>
+    <div id="viewer-content" style="display:none;">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-card-val" id="v-stat-remaining">—</div><div class="stat-card-lbl">REMAINING</div></div>
+        <div class="stat-card"><div class="stat-card-val" id="v-stat-sold">—</div><div class="stat-card-lbl">SOLD</div></div>
+        <div class="stat-card"><div class="stat-card-val" id="v-stat-unsold">—</div><div class="stat-card-lbl">UNSOLD</div></div>
+        <div class="stat-card"><div class="stat-card-val" id="v-stat-teams">—</div><div class="stat-card-lbl">TEAMS</div></div>
+      </div>
+
+      <div class="viewer-main">
+        <div class="player-card" id="current-player-card"></div>
+        <div class="live-card">
+          <div class="live-card-title">CURRENT BID HISTORY</div>
+          <div class="bid-history" id="bid-history"></div>
+        </div>
+      </div>
+
+      <h2 class="section-title">TEAMS</h2>
+      <div class="panel" id="teams-panel"></div>
+
+      <h2 class="section-title">PLAYERS</h2>
+      <div class="panel">
+        <div class="filter-row" id="player-filters">
+          <button class="filter-btn active" data-filter="all">ALL</button>
+          <button class="filter-btn" data-filter="available">AVAILABLE</button>
+          <button class="filter-btn" data-filter="sold">SOLD</button>
+          <button class="filter-btn" data-filter="unsold">UNSOLD</button>
+        </div>
+        <div id="players-panel"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <div class="status-dot" id="status-dot"></div>
+  <span id="status-msg">Connecting…</span>
+</div>
+
+<script>
+const DB_NAME = 'CricketAuctionDB', DB_VERSION = 1, STORE = 'auction_state';
+const ROLE_LABELS = { BAT:'Batsman', BWL:'Bowler', ALL:'All-Rounder', WK:'Wicket Keeper' };
+const ROLE_COLORS = { BAT:'role-BAT', BWL:'role-BWL', ALL:'role-ALL', WK:'role-WK' };
+
+let db = null;
+let state = null;
+let playerFilter = 'all';
+let refreshTimer = null;
+let lastTimestamp = 0;
+
+function initDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      if (!e.target.result.objectStoreNames.contains(STORE)) {
+        e.target.result.createObjectStore(STORE, { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; setStatus('ok', 'Database connected'); res(db); };
+    req.onerror = e => { setStatus('err', 'Database unavailable'); rej(e.target.error); };
+  });
+}
+
+function setStatus(type, msg) {
+  const dot = document.getElementById('status-dot');
+  const el = document.getElementById('status-msg');
+  dot.className = 'status-dot' + (type === 'ok' ? ' ok' : '');
+  el.textContent = msg;
+}
+
+function applySavedState(saved){
+  if(!saved||!saved.teams||!saved.teams.length){state=null;return false;}
+  state={
+    teams:saved.teams,
+    players:saved.players||[],
+    wallet:saved.wallet,
+    maxPlayers:saved.maxPlayers||0,
+    queue:saved.queue||[],
+    currentIndex:saved.currentIndex||0,
+    currentBids:saved.currentBids||[],
+    timestamp:saved.timestamp||0
+  };
+  return true;
+}
+
+async function loadStateFromCloud(){
+  try{
+    const res=await fetch('/api/auction',{cache:'no-store'});
+    if(!res.ok) return false;
+    const saved=await res.json();
+    if(!saved) return false;
+    return applySavedState(saved);
+  }catch{return false;}
+}
+
+async function loadStateFromDb() {
+  if (!db) return false;
+  return new Promise(resolve => {
+    const req = db.transaction(STORE, 'readonly').objectStore(STORE).get('main');
+    req.onsuccess = async e => {
+      const saved = e.target.result;
+      if (!saved) { resolve(false); return; }
+      resolve(applySavedState(saved));
+    };
+    req.onerror = () => resolve(false);
+  });
+}
+
+function importJsonBackup(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const s = data.state || data;
+      if (!s.teams || !s.teams.length) throw new Error('Invalid backup');
+      state = {
+        teams: s.teams,
+        players: s.players || [],
+        wallet: s.wallet,
+        maxPlayers: s.maxPlayers || 0,
+        queue: s.queue || [],
+        currentIndex: s.currentIndex || 0,
+        currentBids: s.currentBids || [],
+        timestamp: data.timestamp || Date.now()
+      };
+      renderViewer();
+      setStatus('ok', 'Loaded from JSON backup');
+    } catch (err) {
+      alert('Invalid backup file');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function getCurrentPlayer() {
+  if (!state || !state.queue.length || state.currentIndex >= state.queue.length) return null;
+  return state.players[state.queue[state.currentIndex]] || null;
+}
+
+function renderViewer() {
+  const emptyEl = document.getElementById('viewer-empty');
+  const contentEl = document.getElementById('viewer-content');
+
+  if (!state || !state.teams.length) {
+    emptyEl.style.display = 'block';
+    contentEl.style.display = 'none';
+    document.getElementById('viewer-updated').textContent = 'No auction data';
+    return;
+  }
+
+  emptyEl.style.display = 'none';
+  contentEl.style.display = 'block';
+
+  const sold = state.players.filter(p => p.status === 'sold').length;
+  const unsold = state.players.filter(p => p.status === 'unsold').length;
+  const remaining = state.players.length - sold - unsold;
+
+  document.getElementById('v-stat-remaining').textContent = remaining;
+  document.getElementById('v-stat-sold').textContent = sold;
+  document.getElementById('v-stat-unsold').textContent = unsold;
+  document.getElementById('v-stat-teams').textContent = state.teams.length;
+
+  renderCurrentPlayer();
+  renderBidHistory();
+  renderTeams();
+  renderPlayers();
+
+  const ts = state.timestamp ? new Date(state.timestamp) : new Date();
+  const auctionStatus = state.currentIndex >= state.queue.length ? 'Auction ended' : `Player ${state.currentIndex + 1} of ${state.queue.length}`;
+  document.getElementById('viewer-updated').textContent = `${auctionStatus} · Updated ${ts.toLocaleTimeString()}`;
+}
+
+function renderCurrentPlayer() {
+  const card = document.getElementById('current-player-card');
+  const p = getCurrentPlayer();
+
+  if (!p || state.currentIndex >= state.queue.length) {
+    card.className = 'player-card empty';
+    card.innerHTML = state.currentIndex >= state.queue.length
+      ? '🏁 Auction completed'
+      : 'Waiting for next player…';
+    return;
+  }
+
+  const lastBid = state.currentBids.length ? state.currentBids[state.currentBids.length - 1] : null;
+  const avatar = p.imageData
+    ? `<img src="${p.imageData}" alt="${p.name}">`
+    : `<span>${p.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}</span>`;
+
+  card.className = 'player-card';
+  card.innerHTML = `
+    <div class="player-num">PLAYER #${state.currentIndex + 1} OF ${state.queue.length}</div>
+    <div class="player-avatar">${avatar}</div>
+    <div class="player-name">${p.name}</div>
+    <div class="role-tag ${ROLE_COLORS[p.role] || ''}">${ROLE_LABELS[p.role] || p.role}</div>
+    <div class="price-row">
+      <div class="price-box">
+        <div class="price-lbl">BASE PRICE</div>
+        <div class="price-val">₹${p.base.toLocaleString()}</div>
+      </div>
+      <div class="price-box">
+        <div class="price-lbl">CURRENT HIGHEST</div>
+        <div class="price-val">${lastBid ? `₹${lastBid.amount.toLocaleString()}` : '—'}</div>
+        ${lastBid ? `<div class="price-team">${lastBid.teamName}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+function renderBidHistory() {
+  const el = document.getElementById('bid-history');
+  if (!state.currentBids || !state.currentBids.length) {
+    el.innerHTML = '<div class="no-bids">No bids yet for this player</div>';
+    return;
+  }
+  el.innerHTML = [...state.currentBids].reverse().map((b, i) => `
+    <div class="bid-item${i === 0 ? ' latest' : ''}">
+      <span>${b.teamName}</span>
+      <span class="bid-price">₹${b.amount.toLocaleString()}</span>
+    </div>`).join('');
+}
+
+function renderTeams() {
+  const panel = document.getElementById('teams-panel');
+  panel.innerHTML = state.teams.map(t => {
+    const pct = state.maxPlayers > 0
+      ? Math.round((t.players.length / state.maxPlayers) * 100)
+      : Math.round((t.spent / (t.wallet + t.spent || 1)) * 100);
+    const atCap = state.maxPlayers > 0 && t.players.length >= state.maxPlayers;
+    const capLabel = state.maxPlayers > 0
+      ? `${t.players.length}/${state.maxPlayers} players`
+      : `${t.players.length} players`;
+    return `
+      <div class="team-card">
+        <div class="team-card-header">
+          <div class="team-name">${t.name}${atCap ? ' 🏁' : ''}</div>
+          <div class="team-wallet">₹${t.wallet.toLocaleString()}</div>
+        </div>
+        <div class="team-meta">${capLabel} · ₹${t.spent.toLocaleString()} spent · Started ₹${state.wallet.toLocaleString()}</div>
+        ${state.maxPlayers > 0 ? `<div class="team-cap-bar"><div class="team-cap-fill${atCap ? ' full' : ''}" style="width:${Math.min(pct, 100)}%"></div></div>` : ''}
+        <div class="chip-list">
+          ${t.players.map(p => `<span class="chip">${p.name} · ₹${p.price.toLocaleString()}</span>`).join('')}
+          ${t.players.length === 0 ? '<span style="font-size:11px;color:var(--muted);">No players yet</span>' : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderPlayers() {
+  const panel = document.getElementById('players-panel');
+  const list = state.players.filter(p => playerFilter === 'all' || p.status === playerFilter);
+  if (!list.length) {
+    panel.innerHTML = '<div class="no-bids">No players in this category</div>';
+    return;
+  }
+  panel.innerHTML = list.map(p => {
+    let statusHtml = `<span class="pli-status ${p.status}">${p.status.toUpperCase()}</span>`;
+    if (p.status === 'sold') {
+      statusHtml = `<div class="pli-status sold">${p.soldTo}<br>₹${p.soldPrice?.toLocaleString()}</div>`;
+    }
+    return `
+      <div class="player-item ${p.status}">
+        <div style="flex:1;min-width:0;">
+          <div class="pli-name">${p.name}</div>
+          <div class="pli-meta">${ROLE_LABELS[p.role] || p.role} · Base ₹${p.base.toLocaleString()}</div>
+        </div>
+        ${statusHtml}
+      </div>`;
+  }).join('');
+}
+
+async function refreshViewer() {
+  const prevTs = state?.timestamp || 0;
+  const fromCloud = await loadStateFromCloud();
+  if (!fromCloud && !state) await loadStateFromDb();
+  if (state && state.timestamp !== prevTs) {
+    setStatus('ok', fromCloud ? `Live (cloud) · ${new Date().toLocaleTimeString()}` : `Synced · ${new Date().toLocaleTimeString()}`);
+  } else if (!state) {
+    setStatus('ok', 'Waiting for admin to start auction…');
+  }
+  renderViewer();
+}
+
+function copyViewerLink() {
+  const url = window.location.href.split('#')[0];
+  navigator.clipboard.writeText(url).then(() => {
+    setStatus('ok', 'Link copied — share with spectators');
+  }).catch(() => {
+    prompt('Copy this link:', url);
+  });
+}
+
+function startAutoRefresh() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(refreshViewer, 1000);
+}
+
+document.getElementById('player-filters').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  playerFilter = btn.dataset.filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+  renderPlayers();
+});
+
+initDB()
+  .then(async () => {
+    await refreshViewer();
+    startAutoRefresh();
+    if (!state) setStatus('ok', 'Live — waiting for auction data');
+  })
+  .catch(async () => {
+    await refreshViewer();
+    startAutoRefresh();
+  });
+</script>
+</body>
+</html>
