@@ -1,4 +1,12 @@
+export const config = { runtime: 'edge' };
+
 const KV_KEY = 'auction:live';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
 
 async function kvGet(key) {
   const url = process.env.KV_REST_API_URL;
@@ -30,39 +38,41 @@ async function kvSet(key, value) {
   if (!res.ok) throw new Error(`KV SET failed: ${res.status}`);
 }
 
-module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+function jsonResponse(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+  });
+}
 
+export default async function handler(req) {
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
     if (req.method === 'GET') {
       const data = await kvGet(KV_KEY);
-      return res.status(200).json(data ?? null);
+      return jsonResponse(data ?? null);
     }
 
     if (req.method === 'POST') {
-      const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      const body = await req.json();
       if (!body || !body.teams || !body.teams.length) {
-        return res.status(400).json({ error: 'Invalid auction data' });
+        return jsonResponse({ error: 'Invalid auction data' }, 400);
       }
       body.timestamp = Date.now();
       body.id = 'main';
       await kvSet(KV_KEY, body);
-      return res.status(200).json({ ok: true, timestamp: body.timestamp });
+      return jsonResponse({ ok: true, timestamp: body.timestamp });
     }
 
-    return res.status(405).json({ error: 'Method not allowed' });
+    return jsonResponse({ error: 'Method not allowed' }, 405);
   } catch (err) {
-    console.error('Auction API error:', err);
     const msg = String(err.message || err);
     if (msg.includes('KV not configured')) {
-      return res.status(503).json({ error: 'Vercel KV not connected — add KV in project Storage settings' });
+      return jsonResponse({ error: 'Vercel KV not connected — add KV in Storage settings' }, 503);
     }
-    return res.status(500).json({ error: msg });
+    return jsonResponse({ error: msg }, 500);
   }
-};
+}

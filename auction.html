@@ -1631,11 +1631,11 @@ function buildCloudPayload(){
 
 async function syncToCloud(){
   const payload=buildCloudPayload();
-  if(!payload) return false;
+  if(!payload) return { ok:false, status:0 };
   try{
     const res=await fetch('/api/auction',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    return res.ok;
-  }catch{return false;}
+    return { ok:res.ok, status:res.status };
+  }catch{return { ok:false, status:0 };}
 }
 
 function saveStateToDb() {
@@ -1655,9 +1655,12 @@ function saveStateToDb() {
     }
   });
   tx.oncomplete = async () => {
-    const cloudOk=await syncToCloud();
+    const cloud=await syncToCloud();
     const time=new Date().toLocaleTimeString();
-    setDbStatus('ok', cloudOk ? `Saved · ${time} · ☁ Live for viewers` : `Saved locally · ${time}`);
+    if(cloud.ok) setDbStatus('ok',`Saved · ${time} · ☁ Live for viewers`);
+    else if(cloud.status===404) setDbStatus('err',`Saved locally · API 404 — push api/ folder & redeploy`);
+    else if(cloud.status===503) setDbStatus('err',`Saved locally · Connect Vercel KV in Storage`);
+    else setDbStatus('ok',`Saved locally · ${time}`);
   };
   tx.onerror    = () => { setDbStatus('err','Save failed'); showToast('❌ Save failed'); };
 }

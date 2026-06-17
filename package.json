@@ -1,4 +1,7 @@
 {
   "name": "cricbid-auction",
-  "private": true
+  "private": true,
+  "engines": {
+    "node": "20.x"
+  }
 }
