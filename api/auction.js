@@ -1,12 +1,27 @@
-export const config = { runtime: 'edge' };
+export const config = { runtime: 'nodejs' };
+
+import Pusher from 'pusher';
 
 const KV_KEY = 'auction:live';
+const PUSHER_CHANNEL = 'auction-live';
+const PUSHER_EVENT = 'state-update';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
+
+const pusher =
+  process.env.PUSHER_APP_ID && process.env.PUSHER_KEY && process.env.PUSHER_SECRET
+    ? new Pusher({
+        appId: process.env.PUSHER_APP_ID,
+        key: process.env.PUSHER_KEY,
+        secret: process.env.PUSHER_SECRET,
+        cluster: process.env.PUSHER_CLUSTER || 'ap2',
+        useTLS: true,
+      })
+    : null;
 
 async function kvGet(key) {
   const url = process.env.KV_REST_API_URL;
@@ -38,6 +53,15 @@ async function kvSet(key, value) {
   if (!res.ok) throw new Error(`KV SET failed: ${res.status}`);
 }
 
+async function broadcastUpdate(timestamp) {
+  if (!pusher) return;
+  try {
+    await pusher.trigger(PUSHER_CHANNEL, PUSHER_EVENT, { timestamp });
+  } catch (err) {
+    console.error('Pusher broadcast failed:', err);
+  }
+}
+
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -64,6 +88,7 @@ export default async function handler(req) {
       body.timestamp = Date.now();
       body.id = 'main';
       await kvSet(KV_KEY, body);
+      await broadcastUpdate(body.timestamp);
       return jsonResponse({ ok: true, timestamp: body.timestamp });
     }
 

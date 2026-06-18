@@ -198,6 +198,7 @@
   <span id="status-msg">Connecting…</span>
 </div>
 
+<script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
 <script>
 const DB_NAME = 'CricketAuctionDB', DB_VERSION = 1, STORE = 'auction_state';
 const ROLE_LABELS = { BAT:'Batsman', BWL:'Bowler', ALL:'All-Rounder', WK:'Wicket Keeper' };
@@ -206,8 +207,10 @@ const ROLE_COLORS = { BAT:'role-BAT', BWL:'role-BWL', ALL:'role-ALL', WK:'role-W
 let db = null;
 let state = null;
 let playerFilter = 'all';
-let refreshTimer = null;
 let lastSyncSignature = '';
+let lastFetchedTimestamp = 0;
+let pusherClient = null;
+let fetchInFlight = false;
 
 function getSyncSignature(s){
   if(!s) return '';
@@ -459,25 +462,91 @@ function renderPlayers() {
   }).join('');
 }
 
-async function refreshViewer() {
-  const prevSignature = lastSyncSignature;
-  const fromCloud = await loadStateFromCloud();
-  if (!fromCloud && !state) await loadStateFromDb();
+function flashLiveBanner() {
+  const banner = document.getElementById('live-bid-banner');
+  if (!banner.classList.contains('show')) return;
+  banner.classList.remove('flash');
+  void banner.offsetWidth;
+  banner.classList.add('flash');
+}
 
+function applyViewerUpdate(fromCloud) {
+  const prevSignature = lastSyncSignature;
   const sig = getSyncSignature(state);
   if (sig && sig !== prevSignature) {
     lastSyncSignature = sig;
-    const banner = document.getElementById('live-bid-banner');
-    if (banner.classList.contains('show')) {
-      banner.classList.remove('flash');
-      void banner.offsetWidth;
-      banner.classList.add('flash');
-    }
+    flashLiveBanner();
     setStatus('ok', fromCloud ? `Live · ${new Date().toLocaleTimeString()}` : `Synced · ${new Date().toLocaleTimeString()}`);
   } else if (!state) {
     setStatus('ok', 'Waiting for admin to start auction…');
   }
   renderViewer();
+}
+
+async function fetchLatestState() {
+  if (fetchInFlight) return false;
+  fetchInFlight = true;
+  try {
+    const prevSignature = lastSyncSignature;
+    const fromCloud = await loadStateFromCloud();
+    if (fromCloud && state?.timestamp) lastFetchedTimestamp = state.timestamp;
+    if (!fromCloud && !state) await loadStateFromDb();
+
+    const sig = getSyncSignature(state);
+    if (sig && sig !== prevSignature) {
+      lastSyncSignature = sig;
+      flashLiveBanner();
+    }
+    renderViewer();
+    return fromCloud;
+  } finally {
+    fetchInFlight = false;
+  }
+}
+
+async function refreshViewer() {
+  const fromCloud = await fetchLatestState();
+  if (fromCloud) {
+    setStatus('ok', `Live · ${new Date().toLocaleTimeString()}`);
+  } else if (!state) {
+    setStatus('ok', 'Waiting for admin to start auction…');
+  } else {
+    setStatus('ok', `Synced · ${new Date().toLocaleTimeString()}`);
+  }
+}
+
+async function onRealtimeUpdate(data) {
+  const ts = data?.timestamp || 0;
+  if (ts && ts <= lastFetchedTimestamp) return;
+  const fromCloud = await fetchLatestState();
+  if (fromCloud) {
+    setStatus('ok', `Live · ${new Date().toLocaleTimeString()}`);
+  }
+}
+
+async function initRealtime() {
+  try {
+    const cfgRes = await fetch('/api/pusher-config');
+    if (!cfgRes.ok) throw new Error('Pusher not configured');
+    const cfg = await cfgRes.json();
+    if (!cfg.key) throw new Error('Missing Pusher key');
+
+    pusherClient = new Pusher(cfg.key, { cluster: cfg.cluster, forceTLS: true });
+    const channel = pusherClient.subscribe('auction-live');
+    channel.bind('state-update', onRealtimeUpdate);
+
+    pusherClient.connection.bind('connected', () => {
+      setStatus('ok', 'WebSocket connected · waiting for updates');
+    });
+    pusherClient.connection.bind('disconnected', () => {
+      setStatus('err', 'WebSocket disconnected — use Refresh');
+    });
+    pusherClient.connection.bind('error', () => {
+      setStatus('err', 'WebSocket error — use Refresh');
+    });
+  } catch {
+    setStatus('err', 'Realtime unavailable — use Refresh button');
+  }
 }
 
 function copyViewerLink() {
@@ -487,11 +556,6 @@ function copyViewerLink() {
   }).catch(() => {
     prompt('Copy this link:', url);
   });
-}
-
-function startAutoRefresh() {
-  if (refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(refreshViewer, 1000);
 }
 
 document.getElementById('player-filters').addEventListener('click', e => {
@@ -505,12 +569,12 @@ document.getElementById('player-filters').addEventListener('click', e => {
 initDB()
   .then(async () => {
     await refreshViewer();
-    startAutoRefresh();
-    if (!state) setStatus('ok', 'Live — waiting for auction data');
+    await initRealtime();
+    if (!state) setStatus('ok', 'WebSocket ready — waiting for auction data');
   })
   .catch(async () => {
     await refreshViewer();
-    startAutoRefresh();
+    await initRealtime();
   });
 </script>
 </body>
