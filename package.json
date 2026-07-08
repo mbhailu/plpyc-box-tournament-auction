@@ -2,7 +2,7 @@
   "name": "cricbid-auction",
   "private": true,
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "dependencies": {
     "pusher": "^5.2.0"
