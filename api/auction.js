@@ -63,10 +63,12 @@ async function broadcastUpdate(timestamp) {
 }
 
 function jsonResponse(body, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-  });
+  Object.entries(corsHeaders).forEach(([k, v]) => res.setHeader(k, v));
+
+  res.setHeader("Content-Type", "application/json");
+  res.setHeader("Cache-Control", "no-store");
+
+  return res.status(status).json(body);
 }
 
 export default async function handler(req, res) {
