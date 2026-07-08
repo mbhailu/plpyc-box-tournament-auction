@@ -62,7 +62,7 @@ async function broadcastUpdate(timestamp) {
   }
 }
 
-function jsonResponse(body, status = 200) {
+function jsonResponse(res, body, status = 200) {
   Object.entries(corsHeaders).forEach(([k, v]) => res.setHeader(k, v));
 
   res.setHeader("Content-Type", "application/json");
@@ -79,27 +79,27 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const data = await kvGet(KV_KEY);
-      return jsonResponse(data ?? null);
+      return jsonResponse(res, data ?? null);
     }
 
     if (req.method === 'POST') {
       const body = await req.json();
       if (!body || !body.teams || !body.teams.length) {
-        return jsonResponse({ error: 'Invalid auction data' }, 400);
+        return jsonResponse(res, { error: 'Invalid auction data' }, 400);
       }
       body.timestamp = Date.now();
       body.id = 'main';
       await kvSet(KV_KEY, body);
       await broadcastUpdate(body.timestamp);
-      return jsonResponse({ ok: true, timestamp: body.timestamp });
+      return jsonResponse(res, { ok: true, timestamp: body.timestamp });
     }
 
-    return jsonResponse({ error: 'Method not allowed' }, 405);
+    return jsonResponse(res,{ error: 'Method not allowed' }, 405);
   } catch (err) {
     const msg = String(err.message || err);
     if (msg.includes('KV not configured')) {
-      return jsonResponse({ error: 'Vercel KV not connected — add KV in Storage settings' }, 503);
+      return jsonResponse(res,{ error: 'Vercel KV not connected — add KV in Storage settings' }, 503);
     }
-    return jsonResponse({ error: msg }, 500);
+    return jsonResponse(res,{ error: msg }, 500);
   }
 }
