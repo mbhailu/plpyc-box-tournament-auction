@@ -73,35 +73,37 @@ function jsonResponse(body, status = 200) {
   });
 }
 
-export default async function handler(req) {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 200, headers: corsHeaders });
-  }
-
-  try {
-    if (req.method === 'GET') {
-      const data = await kvGet(KV_KEY);
-      return jsonResponse(data ?? null);
+export default {
+  async fetch(request) {
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 200, headers: corsHeaders });
     }
 
-    if (req.method === 'POST') {
-      const body = await req.json();
-      if (!body || !body.teams || !body.teams.length) {
-        return jsonResponse({ error: 'Invalid auction data' }, 400);
+    try {
+      if (request.method === 'GET') {
+        const data = await kvGet(KV_KEY);
+        return jsonResponse(data ?? null);
       }
-      body.timestamp = Date.now();
-      body.id = 'main';
-      await kvSet(KV_KEY, body);
-      await broadcastUpdate(body.timestamp);
-      return jsonResponse({ ok: true, timestamp: body.timestamp });
-    }
 
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  } catch (err) {
-    const msg = String(err.message || err);
-    if (msg.includes('KV not configured')) {
-      return jsonResponse({ error: 'Vercel KV not connected — add KV in Storage settings' }, 503);
+      if (request.method === 'POST') {
+        const body = await request.json();
+        if (!body || !body.teams || !body.teams.length) {
+          return jsonResponse({ error: 'Invalid auction data' }, 400);
+        }
+        body.timestamp = Date.now();
+        body.id = 'main';
+        await kvSet(KV_KEY, body);
+        await broadcastUpdate(body.timestamp);
+        return jsonResponse({ ok: true, timestamp: body.timestamp });
+      }
+
+      return jsonResponse({ error: 'Method not allowed' }, 405);
+    } catch (err) {
+      const msg = String(err.message || err);
+      if (msg.includes('KV not configured')) {
+        return jsonResponse({ error: 'Vercel KV not connected — add KV in Storage settings' }, 503);
+      }
+      return jsonResponse({ error: msg }, 500);
     }
-    return jsonResponse({ error: msg }, 500);
-  }
-}
+  },
+};
