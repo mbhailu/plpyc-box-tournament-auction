@@ -1,0 +1,183 @@
+import Pusher from 'pusher';
+
+export const config = { runtime: 'nodejs' };
+
+const KV_KEY = 'auction:live';
+const PUSHER_CHANNEL = 'auction-live';
+const PUSHER_EVENT = 'state-update';
+const PUSHER_MAX_BYTES = 9000;
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, If-None-Match',
+};
+
+const pusher =
+  process.env.PUSHER_APP_ID && process.env.PUSHER_KEY && process.env.PUSHER_SECRET
+    ? new Pusher({
+        appId: process.env.PUSHER_APP_ID,
+        key: process.env.PUSHER_KEY,
+        secret: process.env.PUSHER_SECRET,
+        cluster: process.env.PUSHER_CLUSTER || 'ap2',
+        useTLS: true,
+      })
+    : null;
+
+function stripTeamForCloud(team) {
+  return {
+    id: team.id,
+    name: team.name,
+    wallet: team.wallet,
+    spent: team.spent,
+    players: (team.players || []).map((p) => ({
+      name: p.name,
+      role: p.role,
+      price: p.price,
+    })),
+  };
+}
+
+function stripPlayerForCloud(player) {
+  return {
+    id: player.id,
+    name: player.name,
+    role: player.role,
+    base: player.base,
+    status: player.status,
+    soldTo: player.soldTo,
+    soldPrice: player.soldPrice,
+  };
+}
+
+function stripStateForCloud(body) {
+  return {
+    ...body,
+    teams: (body.teams || []).map(stripTeamForCloud),
+    players: (body.players || []).map(stripPlayerForCloud),
+  };
+}
+
+function buildPusherPayload(body) {
+  const timestamp = body.timestamp;
+  if (body.syncKind === 'bid') {
+    return {
+      kind: 'bid',
+      timestamp,
+      currentIndex: body.currentIndex,
+      currentBids: body.currentBids,
+      currentPlayer: body.currentPlayer || null,
+    };
+  }
+
+  return {
+    kind: 'full',
+    timestamp,
+    teams: body.teams,
+    players: body.players,
+    wallet: body.wallet,
+    maxPlayers: body.maxPlayers,
+    queue: body.queue,
+    currentIndex: body.currentIndex,
+    currentBids: body.currentBids,
+    currentPlayer: body.currentPlayer || null,
+  };
+}
+
+async function kvGet(key) {
+  const url = process.env.KV_REST_API_URL;
+  const token = process.env.KV_REST_API_TOKEN;
+  if (!url || !token) return null;
+
+  const res = await fetch(`${url}/get/${encodeURIComponent(key)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`KV GET failed: ${res.status}`);
+  const data = await res.json();
+  if (data.result === null || data.result === undefined) return null;
+  return typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
+}
+
+async function kvSet(key, value) {
+  const url = process.env.KV_REST_API_URL;
+  const token = process.env.KV_REST_API_TOKEN;
+  if (!url || !token) throw new Error('KV not configured');
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(['SET', key, JSON.stringify(value)]),
+  });
+  if (!res.ok) throw new Error(`KV SET failed: ${res.status}`);
+}
+
+async function broadcastUpdate(body) {
+  if (!pusher) return;
+  try {
+    let payload = buildPusherPayload(body);
+    if (JSON.stringify(payload).length > PUSHER_MAX_BYTES) {
+      payload = { kind: 'refresh', timestamp: body.timestamp };
+    }
+    await pusher.trigger(PUSHER_CHANNEL, PUSHER_EVENT, payload);
+  } catch (err) {
+    console.error('Pusher broadcast failed:', err);
+  }
+}
+
+function jsonResponse(body, status = 200, extraHeaders = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders,
+      'Content-Type': 'application/json',
+      'Cache-Control': 'private, max-age=0, must-revalidate',
+      ...extraHeaders,
+    },
+  });
+}
+
+export default {
+  async fetch(request) {
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 200, headers: corsHeaders });
+    }
+
+    try {
+      if (request.method === 'GET') {
+        const data = await kvGet(KV_KEY);
+        const etag = `"${data?.timestamp || 0}"`;
+        if (request.headers.get('If-None-Match') === etag) {
+          return new Response(null, {
+            status: 304,
+            headers: { ...corsHeaders, ETag: etag },
+          });
+        }
+        return jsonResponse(data ?? null, 200, { ETag: etag });
+      }
+
+      if (request.method === 'POST') {
+        const body = await request.json();
+        if (!body || !body.teams || !body.teams.length) {
+          return jsonResponse({ error: 'Invalid auction data' }, 400);
+        }
+        body.timestamp = Date.now();
+        body.id = 'main';
+        const stored = stripStateForCloud(body);
+        await kvSet(KV_KEY, stored);
+        await broadcastUpdate(stored);
+        return jsonResponse({ ok: true, timestamp: body.timestamp });
+      }
+
+      return jsonResponse({ error: 'Method not allowed' }, 405);
+    } catch (err) {
+      const msg = String(err.message || err);
+      if (msg.includes('KV not configured')) {
+        return jsonResponse({ error: 'Vercel KV not connected — add KV in Storage settings' }, 503);
+      }
+      return jsonResponse({ error: msg }, 500);
+    }
+  },
+};

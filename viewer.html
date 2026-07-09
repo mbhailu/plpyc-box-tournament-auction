@@ -209,6 +209,7 @@ let state = null;
 let playerFilter = 'all';
 let lastSyncSignature = '';
 let lastFetchedTimestamp = 0;
+let cachedEtag = null;
 let pusherClient = null;
 let fetchInFlight = false;
 
@@ -254,14 +255,39 @@ function applySavedState(saved){
   return true;
 }
 
-async function loadStateFromCloud(){
+async function loadStateFromCloud(force = false){
   try{
-    const res=await fetch(`/api/auction?t=${Date.now()}`,{cache:'no-store'});
-    if(!res.ok) return false;
-    const saved=await res.json();
-    if(!saved) return false;
+    const headers = {};
+    if (!force && cachedEtag) headers['If-None-Match'] = cachedEtag;
+    const res = await fetch('/api/auction', { headers });
+    if (res.status === 304) return true;
+    if (!res.ok) return false;
+    cachedEtag = res.headers.get('ETag');
+    const saved = await res.json();
+    if (!saved) return false;
     return applySavedState(saved);
   }catch{return false;}
+}
+
+function applyPusherUpdate(data) {
+  if (!data?.timestamp || data.timestamp <= lastFetchedTimestamp) return false;
+
+  if (data.kind === 'bid' && state) {
+    state.timestamp = data.timestamp;
+    state.currentIndex = data.currentIndex;
+    state.currentBids = data.currentBids || [];
+    state.currentPlayer = data.currentPlayer || null;
+    lastFetchedTimestamp = data.timestamp;
+    return true;
+  }
+
+  if (data.kind === 'full' && data.teams?.length) {
+    applySavedState(data);
+    lastFetchedTimestamp = data.timestamp;
+    return true;
+  }
+
+  return false;
 }
 
 async function loadStateFromDb() {
@@ -483,12 +509,12 @@ function applyViewerUpdate(fromCloud) {
   renderViewer();
 }
 
-async function fetchLatestState() {
+async function fetchLatestState(force = false) {
   if (fetchInFlight) return false;
   fetchInFlight = true;
   try {
     const prevSignature = lastSyncSignature;
-    const fromCloud = await loadStateFromCloud();
+    const fromCloud = await loadStateFromCloud(force);
     if (fromCloud && state?.timestamp) lastFetchedTimestamp = state.timestamp;
     if (!fromCloud && !state) await loadStateFromDb();
 
@@ -505,7 +531,8 @@ async function fetchLatestState() {
 }
 
 async function refreshViewer() {
-  const fromCloud = await fetchLatestState();
+  cachedEtag = null;
+  const fromCloud = await fetchLatestState(true);
   if (fromCloud) {
     setStatus('ok', `Live · ${new Date().toLocaleTimeString()}`);
   } else if (!state) {
@@ -518,6 +545,12 @@ async function refreshViewer() {
 async function onRealtimeUpdate(data) {
   const ts = data?.timestamp || 0;
   if (ts && ts <= lastFetchedTimestamp) return;
+
+  if (applyPusherUpdate(data)) {
+    applyViewerUpdate(true);
+    return;
+  }
+
   const fromCloud = await fetchLatestState();
   if (fromCloud) {
     setStatus('ok', `Live · ${new Date().toLocaleTimeString()}`);

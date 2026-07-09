@@ -1259,7 +1259,7 @@
 <div id="db-status-bar">
   <div class="db-dot" id="db-dot"></div>
   <span id="db-status-msg">Initializing database…</span>
-  <button id="db-save-btn" onclick="saveStateToDb()">💾 SAVE</button>
+  <button id="db-save-btn" onclick="saveStateToCloud()">💾 SAVE</button>
   <button id="db-load-btn" onclick="loadStateFromDb()">📂 LOAD</button>
   <button id="db-export-btn" onclick="exportJsonBackup()">⬇ BACKUP</button>
   <button id="db-import-json-btn" onclick="document.getElementById('json-restore-input').click()">⬆ RESTORE</button>
@@ -1338,7 +1338,7 @@
     <div id="max-cap-indicator" style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);display:none;"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
       <button class="btn-remove-sale" id="remove-sale-btn" onclick="openRemoveSaleModal()">🔄 REMOVE SALE</button>
-      <button class="filter-btn" onclick="saveStateToDb()" style="color:var(--gold);border-color:rgba(212,160,23,0.4);">💾 SAVE</button>
+      <button class="filter-btn" onclick="saveStateToCloud()" style="color:var(--gold);border-color:rgba(212,160,23,0.4);">💾 SAVE</button>
       <button class="filter-btn" onclick="window.open('viewer.html','_blank')">👁 VIEWER</button>
       <button class="filter-btn" onclick="copyViewerShareLink()">🔗 COPY LIVE LINK</button>
       <button class="filter-btn" onclick="endAuction()">END AUCTION ↗</button>
@@ -1617,54 +1617,122 @@ function initDB() {
 }
 function setDbStatus(t,m){ document.getElementById('db-dot').className='db-dot '+t; document.getElementById('db-status-msg').textContent=m; }
 
-function buildCloudPayload(){
-  if(!state||!state.teams||!state.teams.length) return null;
-  const pIdx=state.queue[state.currentIndex];
-  const currentPlayer=pIdx!==undefined?state.players[pIdx]:null;
+function buildCloudPayload(syncKind = 'full') {
+  if (!state || !state.teams || !state.teams.length) return null;
+  const pIdx = state.queue[state.currentIndex];
+  const currentPlayer = pIdx !== undefined ? state.players[pIdx] : null;
   return {
-    id:'main', timestamp:Date.now(),
-    teams:state.teams, players:state.players.map(p=>({...p,imageData:undefined})),
-    wallet:state.wallet, maxPlayers:state.maxPlayers, globalBasePrice:state.globalBasePrice||0,
-    queue:state.queue, currentIndex:state.currentIndex,
-    currentBids:state.currentBids, playerFilter:state.playerFilter,
-    activeTab:state.activeTab, isReauction:state.isReauction, bidIncrement:state.bidIncrement||0,
-    currentPlayer:currentPlayer?{name:currentPlayer.name,role:currentPlayer.role,base:currentPlayer.base}:null
+    id: 'main',
+    timestamp: Date.now(),
+    syncKind,
+    teams: state.teams.map(t => ({
+      id: t.id,
+      name: t.name,
+      wallet: t.wallet,
+      spent: t.spent,
+      players: (t.players || []).map(p => ({ name: p.name, role: p.role, price: p.price })),
+    })),
+    players: state.players.map(p => ({
+      id: p.id,
+      name: p.name,
+      role: p.role,
+      base: p.base,
+      status: p.status,
+      soldTo: p.soldTo,
+      soldPrice: p.soldPrice,
+    })),
+    wallet: state.wallet,
+    maxPlayers: state.maxPlayers,
+    globalBasePrice: state.globalBasePrice || 0,
+    queue: state.queue,
+    currentIndex: state.currentIndex,
+    currentBids: state.currentBids,
+    currentPlayer: currentPlayer
+      ? { name: currentPlayer.name, role: currentPlayer.role, base: currentPlayer.base }
+      : null,
   };
 }
 
-async function syncToCloud(){
-  const payload=buildCloudPayload();
-  if(!payload) return { ok:false, status:0 };
-  try{
-    const res=await fetch('/api/auction',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    return { ok:res.ok, status:res.status };
-  }catch{return { ok:false, status:0 };}
+let cloudSyncTimer = null;
+
+async function syncToCloud(syncKind = 'full') {
+  const payload = buildCloudPayload(syncKind);
+  if (!payload) return { ok: false, status: 0 };
+  try {
+    const res = await fetch('/api/auction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return { ok: res.ok, status: res.status };
+  } catch {
+    return { ok: false, status: 0 };
+  }
 }
 
-function saveStateToDb() {
-  syncToCloud().then(cloud=>{
-    const time=new Date().toLocaleTimeString();
-    if(cloud.ok) setDbStatus('ok',`Live · ${time} · ☁ Viewers updated`);
-    else if(cloud.status===404) setDbStatus('err',`Local only · API 404 — push api/ & redeploy`);
-    else if(cloud.status===503) setDbStatus('err',`Local only · Connect Vercel KV`);
-    else if(!db) setDbStatus('err',`Cloud sync failed · ${time}`);
-  });
-  if (!db) { return; }
-  const tx = db.transaction(STORE,'readwrite'), store = tx.objectStore(STORE);
-  store.put({ id:'main', timestamp:Date.now(),
-    teams:state.teams, players:state.players.map(p=>({...p,imageData:undefined})),
-    wallet:state.wallet, maxPlayers:state.maxPlayers, globalBasePrice:state.globalBasePrice||0,
-    queue:state.queue, currentIndex:state.currentIndex,
-    currentBids:state.currentBids, playerFilter:state.playerFilter,
-    activeTab:state.activeTab, isReauction:state.isReauction, bidIncrement:state.bidIncrement||0,
-    saleHistory:saleHistory.map(s=>({...s}))
+function scheduleCloudSync(syncKind = 'full') {
+  if (syncKind === 'full') {
+    clearTimeout(cloudSyncTimer);
+    cloudSyncTimer = null;
+    syncToCloud('full').then(updateCloudStatus);
+    return;
+  }
+  clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(() => {
+    cloudSyncTimer = null;
+    syncToCloud('bid').then(updateCloudStatus);
+  }, 400);
+}
+
+function updateCloudStatus(cloud) {
+  const time = new Date().toLocaleTimeString();
+  if (cloud.ok) setDbStatus('ok', `Live · ${time} · ☁ Viewers updated`);
+  else if (cloud.status === 404) setDbStatus('err', 'Local only · API 404 — push api/ & redeploy');
+  else if (cloud.status === 503) setDbStatus('err', 'Local only · Connect Vercel KV');
+  else if (!db) setDbStatus('err', `Cloud sync failed · ${time}`);
+}
+
+function saveStateToLocal() {
+  if (!db) return;
+  const tx = db.transaction(STORE, 'readwrite');
+  const store = tx.objectStore(STORE);
+  store.put({
+    id: 'main',
+    timestamp: Date.now(),
+    teams: state.teams,
+    players: state.players.map(p => ({ ...p, imageData: undefined })),
+    wallet: state.wallet,
+    maxPlayers: state.maxPlayers,
+    globalBasePrice: state.globalBasePrice || 0,
+    queue: state.queue,
+    currentIndex: state.currentIndex,
+    currentBids: state.currentBids,
+    playerFilter: state.playerFilter,
+    activeTab: state.activeTab,
+    isReauction: state.isReauction,
+    bidIncrement: state.bidIncrement || 0,
+    saleHistory: saleHistory.map(s => ({ ...s })),
   });
   state.players.forEach(p => {
     if (p.imageData) {
-      try { db.transaction(STORE,'readwrite').objectStore(STORE).put({id:`img_${p.id}`,imageData:p.imageData}); } catch(e){}
+      try {
+        db.transaction(STORE, 'readwrite').objectStore(STORE).put({ id: `img_${p.id}`, imageData: p.imageData });
+      } catch (e) {}
     }
   });
-  tx.onerror = () => { setDbStatus('err','Save failed'); showToast('❌ Save failed'); };
+  tx.onerror = () => {
+    setDbStatus('err', 'Save failed');
+    showToast('❌ Save failed');
+  };
+}
+
+function saveStateToDb({ syncCloud = false, syncKind = 'full' } = {}) {
+  saveStateToLocal();
+  if (syncCloud) scheduleCloudSync(syncKind);
+}
+
+function saveStateToCloud() {
+  saveStateToDb({ syncCloud: true, syncKind: 'full' });
 }
 
 async function loadStateFromDb() {
@@ -1778,7 +1846,7 @@ function importJsonBackup(event) {
       if (state.currentIndex >= state.queue.length) { endAuction(); }
       else { renderAuction(); updateStats(); renderSidebar(); }
 
-      saveStateToDb(); // also save to IndexedDB
+      saveStateToDb({ syncCloud: true, syncKind: 'full' }); // also save to IndexedDB
       const saved = new Date(data.timestamp).toLocaleString();
       setDbStatus('ok', `Restored from backup · ${saved}`);
       showToast(`📂 Backup restored! (${saved})`);
@@ -1809,7 +1877,7 @@ function startAutoBackupTimer() {
     if (autoBackupSecondsLeft <= 0) {
       autoBackupSecondsLeft = AUTO_BACKUP_INTERVAL;
       exportJsonBackup(true);
-      saveStateToDb();
+      saveStateToLocal();
       showToast('🔄 Auto-backup saved!');
     }
     updateCountdownDisplay();
@@ -1838,7 +1906,7 @@ function updateCountdownDisplay() {
 window.addEventListener('beforeunload', function(e) {
   if (state && state.teams && state.teams.length > 0 && state.currentIndex > 0) {
     exportJsonBackup(true);
-    saveStateToDb();
+    saveStateToLocal();
   }
 });
 
@@ -2030,7 +2098,7 @@ function startAuction(){
   document.getElementById('auction-screen').style.display='block';
   renderAuction();
   updateMaxCapIndicator();
-  saveStateToDb();
+  saveStateToDb({ syncCloud: true, syncKind: 'full' });
   startAutoBackupTimer();
 }
 
@@ -2093,7 +2161,6 @@ function renderAuction(){
   updateStats();
   renderSidebar();
   updateMaxCapIndicator();
-  saveStateToDb();
 }
 
 function getBidIncrement(){
@@ -2238,7 +2305,7 @@ function removeBid(bidIndex,p){
   renderBidLog();
   document.getElementById('bid-error').textContent='';
   showToast(`↩ Bid by ${removed.teamName} removed`);
-  saveStateToDb();
+  saveStateToDb({ syncCloud: true, syncKind: 'bid' });
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2338,7 +2405,7 @@ function placeBid(){
 
   rebuildBidDropdown(p);
   renderBidLog();
-  saveStateToDb();
+  saveStateToDb({ syncCloud: true, syncKind: 'bid' });
 }
 
 function soldPlayer(){
@@ -2382,7 +2449,7 @@ function soldPlayer(){
 
   updateStats();
   document.getElementById('sold-overlay').classList.add('show');
-  saveStateToDb();
+  saveStateToDb({ syncCloud: true, syncKind: 'full' });
 }
 
 // ── REMOVE SALE MODAL ──
@@ -2490,7 +2557,7 @@ function doRelease(){
   renderRemoveSaleList();
   renderAuction();  // refresh main stage so released player shows up — not the old one
   showToast(`🔄 ${playerName} released — ₹${refund.toLocaleString()} refunded to ${team.name}`);
-  saveStateToDb();
+  saveStateToDb({ syncCloud: true, syncKind: 'full' });
 }
 
 function unsoldPlayer(){
@@ -2498,7 +2565,8 @@ function unsoldPlayer(){
   state.players[pIdx].status='unsold';
   state.currentIndex++;
   if(state.currentIndex>=state.queue.length){endAuction();return;}
-  updateStats(); renderSidebar(); renderAuction(); saveStateToDb();
+  updateStats(); renderSidebar(); renderAuction();
+  saveStateToDb({ syncCloud: true, syncKind: 'full' });
 }
 
 function nextPlayer(){
@@ -2623,7 +2691,8 @@ function endAuction(){
     banner.style.display='block';
     document.getElementById('reauction-count').textContent=`${unsoldList.length} player${unsoldList.length>1?'s':''} went unsold. Re-auction now?`;
   } else { banner.style.display='none'; }
-  renderDoneScreen(); saveStateToDb();
+  renderDoneScreen();
+  saveStateToDb({ syncCloud: true, syncKind: 'full' });
 }
 
 function renderDoneScreen(){
@@ -2653,7 +2722,7 @@ function startReauction(){
   document.getElementById('auction-screen').style.display='block';
   updateStats(); renderSidebar(); renderAuction();
   showToast(`🔄 Re-auctioning ${unsold.length} unsold players`);
-  saveStateToDb();
+  saveStateToDb({ syncCloud: true, syncKind: 'full' });
 }
 
 function exportResults(){
